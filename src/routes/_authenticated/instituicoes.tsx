@@ -79,12 +79,12 @@ function InstitutionsContent({ company }: { company: Company }) {
   const canUpdate = hasPermission("institution.update");
 
   const { data: institutions, isLoading } = useQuery({
-    queryKey: ["institutions", company!.id],
+    queryKey: ["institutions", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_institutions")
         .select("*")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("name");
       if (error) throw error;
       return data ?? [];
@@ -127,7 +127,7 @@ function InstitutionsContent({ company }: { company: Company }) {
         toast.success("Instituição atualizada.");
       } else {
         const { error } = await supabase.from("financial_institutions").insert({
-          company_id: company!.id,
+          company_id: company.id,
           code: form.code || null,
           name: form.name,
           type: form.type,
@@ -136,7 +136,7 @@ function InstitutionsContent({ company }: { company: Company }) {
         if (error) throw error;
         toast.success("Instituição cadastrada.");
       }
-      await queryClient.invalidateQueries({ queryKey: ["institutions", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["institutions", company.id] });
       await queryClient.invalidateQueries({ queryKey: ["count"] });
       setDialogOpen(false);
     } catch (err) {
@@ -156,7 +156,7 @@ function InstitutionsContent({ company }: { company: Company }) {
       toast.error(error.message);
     } else {
       toast.success(next === "inativo" ? "Instituição inativada." : "Instituição reativada.");
-      queryClient.invalidateQueries({ queryKey: ["institutions", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["institutions", company.id] });
     }
     setToggleTarget(null);
   }

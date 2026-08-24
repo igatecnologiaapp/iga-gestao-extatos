@@ -89,12 +89,12 @@ function UsersContent({ company }: { company: Company }) {
   const isAdmin = hasPermission("member.manage");
 
   const { data: members, isLoading } = useQuery({
-    queryKey: ["members", company!.id],
+    queryKey: ["members", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_roles")
         .select("id, user_id, role, status, created_at, profiles(email, full_name)")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as unknown as MemberRow[];
@@ -112,14 +112,14 @@ function UsersContent({ company }: { company: Company }) {
     try {
       await invite({
         data: {
-          companyId: company!.id,
+          companyId: company.id,
           email: inviteForm.email,
           fullName: inviteForm.fullName,
           role: inviteForm.role,
         },
       });
       toast.success("Convite enviado e usuário vinculado à empresa.");
-      await queryClient.invalidateQueries({ queryKey: ["members", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["members", company.id] });
       setInviteOpen(false);
       setInviteForm({ fullName: "", email: "", role: "consulta" });
     } catch (err) {
@@ -142,7 +142,7 @@ function UsersContent({ company }: { company: Company }) {
       toast.error(error.message);
     } else {
       toast.success("Papel atualizado.");
-      queryClient.invalidateQueries({ queryKey: ["members", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["members", company.id] });
     }
   }
 
@@ -166,7 +166,7 @@ function UsersContent({ company }: { company: Company }) {
       toast.error(error.message);
     } else {
       toast.success(next === "inativo" ? "Acesso revogado." : "Acesso restaurado.");
-      queryClient.invalidateQueries({ queryKey: ["members", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["members", company.id] });
     }
     setToggleTarget(null);
   }

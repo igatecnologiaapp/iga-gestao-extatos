@@ -36,8 +36,8 @@ function SettingsContent({ company }: { company: Company }) {
   const canManageCompany = hasPermission("company.manage");
 
   const [companyForm, setCompanyForm] = useState({
-    name: company!.name,
-    document: company!.document ?? "",
+    name: company.name,
+    document: company.document ?? "",
   });
   const [savingCompany, setSavingCompany] = useState(false);
 
@@ -56,10 +56,10 @@ function SettingsContent({ company }: { company: Company }) {
           name: companyForm.name,
           document: companyForm.document || null,
         })
-        .eq("id", company!.id);
+        .eq("id", company.id);
       if (error) throw error;
       toast.success("Dados da empresa atualizados.");
-      setCompanyId(company!.id);
+      setCompanyId(company.id);
       await queryClient.invalidateQueries({ queryKey: ["memberships", user?.id] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao salvar.");

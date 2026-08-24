@@ -91,7 +91,7 @@ function DashboardContent({ company }: { company: Company }) {
   return (
     <AppShell
       title="Dashboard"
-      description={`Visão geral de ${company!.name}`}
+      description={`Visão geral de ${company.name}`}
     >
       {needsSetup && (
         <div className="mb-6 rounded-lg border border-primary/25 bg-accent/60 p-5">

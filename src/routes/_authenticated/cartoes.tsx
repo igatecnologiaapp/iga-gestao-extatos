@@ -92,12 +92,12 @@ function CardsContent({ company }: { company: Company }) {
   const canUpdate = hasPermission("card.update");
 
   const { data: institutions } = useQuery({
-    queryKey: ["institutions", company!.id],
+    queryKey: ["institutions", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_institutions")
         .select("id, name")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .eq("status", "ativo")
         .order("name");
       if (error) throw error;
@@ -106,12 +106,12 @@ function CardsContent({ company }: { company: Company }) {
   });
 
   const { data: cards, isLoading } = useQuery({
-    queryKey: ["cards", company!.id],
+    queryKey: ["cards", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
         .select("*, financial_institutions!institution_id(name)")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as unknown as CardWithIssuer[];
@@ -204,13 +204,13 @@ function CardsContent({ company }: { company: Company }) {
       } else {
         const { error } = await supabase.from("cards").insert({
           ...payload,
-          company_id: company!.id,
+          company_id: company.id,
           created_by: user?.id ?? null,
         });
         if (error) throw error;
         toast.success("Cartão cadastrado.");
       }
-      await queryClient.invalidateQueries({ queryKey: ["cards", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["cards", company.id] });
       await queryClient.invalidateQueries({ queryKey: ["count"] });
       setDialogOpen(false);
     } catch (err) {
@@ -226,7 +226,7 @@ function CardsContent({ company }: { company: Company }) {
       toast.error(error.message);
     } else {
       toast.success(`Status alterado para ${CARD_STATUS_LABELS[status]}.`);
-      queryClient.invalidateQueries({ queryKey: ["cards", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["cards", company.id] });
     }
   }
 

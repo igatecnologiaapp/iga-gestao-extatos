@@ -83,13 +83,13 @@ function AuditContent({ company }: { company: Company }) {
   const [dateTo, setDateTo] = useState("");
 
   const { data: entries, isLoading } = useQuery({
-    queryKey: ["audit", company!.id, entityFilter, actionFilter, dateFrom, dateTo],
+    queryKey: ["audit", company.id, entityFilter, actionFilter, dateFrom, dateTo],
     enabled: allowed,
     queryFn: async () => {
       let q = supabase
         .from("audit_log")
         .select("*")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at", { ascending: false })
         .limit(200);
       if (entityFilter !== "all") q = q.eq("entity", entityFilter);
