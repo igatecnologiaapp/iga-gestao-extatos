@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Building2,
@@ -24,7 +25,7 @@ import {
 } from "lucide-react";
 
 import { useCompany } from "@/lib/company-context";
-import { APP_NAME, ROLE_LABELS } from "@/lib/domain";
+import { APP_NAME, ROLE_LABELS, type AppRole, type Company } from "@/lib/domain";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import {
@@ -68,6 +69,79 @@ export function FullScreenLoader() {
       <Loader2 className="h-6 w-6 animate-spin text-primary" />
     </div>
   );
+}
+
+function BlockedAccessScreen({ title, description }: { title: string; description: string }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
+          <Building2 className="h-5 w-5" />
+        </div>
+        <h1 className="mt-4 font-display text-lg font-bold text-foreground">{title}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        <button
+          onClick={async () => {
+            await queryClient.cancelQueries();
+            queryClient.clear();
+            await supabase.auth.signOut();
+            navigate({ to: "/auth", replace: true });
+          }}
+          className="mt-6 inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair da conta
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Guarda de contexto de empresa para as rotas autenticadas.
+ *
+ * Resolve os estados previsíveis de negócio sem quebrar a aplicação:
+ * - carregando sessão/vínculos → loader;
+ * - usuário sem nenhum vínculo → redireciona para o onboarding;
+ * - usuário apenas com vínculos inativos → tela de acesso desativado;
+ * - empresa inativa → tela de empresa desativada;
+ * - caso contrário, renderiza o conteúdo com `company` garantida.
+ */
+export function RequireCompany({
+  children,
+}: {
+  children: (ctx: { company: Company; role: AppRole | null }) => ReactNode;
+}) {
+  const { company, role, memberships, hasOnlyInactiveMemberships, loading } = useCompany();
+
+  if (loading) return <FullScreenLoader />;
+
+  if (memberships.length === 0) {
+    if (hasOnlyInactiveMemberships) {
+      return (
+        <BlockedAccessScreen
+          title="Seu acesso está desativado"
+          description="Seu vínculo com a empresa foi desativado. Procure um administrador da empresa para reativar seu acesso."
+        />
+      );
+    }
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (!company) return <FullScreenLoader />;
+
+  if (company.status !== "ativo") {
+    return (
+      <BlockedAccessScreen
+        title="Empresa inativa"
+        description="Esta empresa está inativa no momento. Entre em contato com o suporte para regularizar o acesso."
+      />
+    );
+  }
+
+  return <>{children({ company, role })}</>;
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
