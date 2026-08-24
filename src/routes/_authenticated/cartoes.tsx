@@ -101,11 +101,11 @@ function CardsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
-        .select("*, financial_institutions(name)")
+        .select("*, financial_institutions!institution_id(name)")
         .eq("company_id", company!.id)
         .order("created_at");
       if (error) throw error;
-      return (data ?? []) as CardWithIssuer[];
+      return (data ?? []) as unknown as CardWithIssuer[];
     },
   });
 

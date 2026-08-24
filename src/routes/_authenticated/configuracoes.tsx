@@ -34,7 +34,7 @@ function SettingsPage() {
   const [savingCompany, setSavingCompany] = useState(false);
 
   const [profileName, setProfileName] = useState(
-    (user?.user_metadata?.full_name as string | undefined) ?? "",
+    (user?.user_metadata?.["full_name"] as string | undefined) ?? "",
   );
   const [savingProfile, setSavingProfile] = useState(false);
 

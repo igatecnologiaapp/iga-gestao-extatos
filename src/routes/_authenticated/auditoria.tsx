@@ -49,17 +49,17 @@ function summarize(entry: AuditEntry): string {
   const newData = (entry.new_data ?? {}) as Record<string, unknown>;
   const oldData = (entry.old_data ?? {}) as Record<string, unknown>;
 
-  if (typeof newData.name === "string") parts.push(newData.name);
-  else if (typeof newData.nickname === "string") parts.push(newData.nickname);
-  else if (typeof newData.email === "string") parts.push(newData.email);
+  if (typeof newData["name"] === "string") parts.push(newData["name"] as string);
+  else if (typeof newData["nickname"] === "string") parts.push(newData["nickname"] as string);
+  else if (typeof newData["email"] === "string") parts.push(newData["email"] as string);
 
   if (entry.action === "status_change" || entry.action === "update") {
-    const oldStatus = oldData.status;
-    const newStatus = newData.status;
+    const oldStatus = oldData["status"];
+    const newStatus = newData["status"];
     if (oldStatus !== newStatus && newStatus) parts.push(`status → ${String(newStatus)}`);
   }
-  if (entry.action === "role_change" || typeof newData.role === "string") {
-    if (newData.role) parts.push(`papel → ${String(newData.role)}`);
+  if (entry.action === "role_change" || typeof newData["role"] === "string") {
+    if (newData["role"]) parts.push(`papel → ${String(newData["role"])}`);
   }
   return parts.join(" · ") || "—";
 }

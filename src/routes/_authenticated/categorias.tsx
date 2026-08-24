@@ -48,7 +48,7 @@ function CategoriesPage() {
   const [dialog, setDialog] = useState<{
     kind: "category" | "subcategory";
     editing: Category | Subcategory | null;
-    parent?: Category;
+    parent?: Category | undefined;
   } | null>(null);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
