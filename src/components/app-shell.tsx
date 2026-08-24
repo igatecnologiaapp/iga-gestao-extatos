@@ -160,7 +160,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-sidebar-border p-4">
         <div className="mb-2 min-w-0 px-1">
           <p className="truncate text-sm font-medium text-sidebar-accent-foreground">
-            {(user?.user_metadata?.full_name as string | undefined) || user?.email}
+            {(user?.user_metadata?.["full_name"] as string | undefined) || user?.email}
           </p>
           <p className="text-[11px] text-sidebar-foreground/55">
             {role ? ROLE_LABELS[role] : ""}

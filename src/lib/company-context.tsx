@@ -58,7 +58,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         {
           id: user.id,
           email: user.email ?? null,
-          full_name: (user.user_metadata?.full_name as string | undefined) ?? null,
+          full_name: (user.user_metadata?.["full_name"] as string | undefined) ?? null,
         },
         { onConflict: "id" },
       )
@@ -89,7 +89,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     const found = memberships.find(
       (m) => m.company_id === (selectedCompanyId ?? stored),
     );
-    return (found ?? memberships[0]).companies;
+    return (found ?? memberships[0])?.companies ?? null;
   }, [memberships, selectedCompanyId]);
 
   const role = useMemo(() => {
