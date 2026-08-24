@@ -190,21 +190,23 @@ async function main() {
 
   // ============ GRANT / STO — configuração estrutural ============
   const missingGrants = introspect(`
-    SELECT count(*) FROM information_schema.tables t
-     WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
-       AND NOT EXISTS (SELECT 1 FROM information_schema.role_table_grants g
-                       WHERE g.table_schema = 'public' AND g.table_name = t.table_name
-                         AND g.grantee = 'authenticated'
-                         AND g.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE'))`);
+    SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public' AND c.relkind = 'r'
+       AND NOT EXISTS (SELECT 1 FROM aclexplode(c.relacl) a
+                       JOIN pg_roles r ON r.oid = a.grantee
+                       WHERE r.rolname = 'authenticated'
+                         AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE'))`);
   if (missingGrants !== null)
     record("GRANT-01", "Toda tabela tem privilégios de API para usuários autenticados", "= 0", missingGrants === "0", `obtido: ${missingGrants}`);
 
   const anonGrants = introspect(`
-    SELECT count(*) FROM information_schema.role_table_grants
-     WHERE table_schema = 'public' AND grantee = 'anon'
-       AND privilege_type IN ('SELECT','INSERT','UPDATE','DELETE')`);
+    SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       CROSS JOIN LATERAL aclexplode(c.relacl) a
+       JOIN pg_roles r ON r.oid = a.grantee
+     WHERE n.nspname = 'public' AND c.relkind = 'r'
+       AND r.rolname = 'anon' AND a.privilege_type IN ('INSERT','UPDATE','DELETE')`);
   if (anonGrants !== null)
-    record("GRANT-02", "Nenhum privilégio de dados concedido a visitantes anônimos", "= 0", anonGrants === "0", `obtido: ${anonGrants}`);
+    record("GRANT-02", "Visitantes anônimos não têm privilégio de escrita em nenhuma tabela", "= 0", anonGrants === "0", `obtido: ${anonGrants}`);
 
   const { data: buckets } = await admin.storage.listBuckets();
   const docs = (buckets ?? []).find((b) => b.name === "financial-documents");
