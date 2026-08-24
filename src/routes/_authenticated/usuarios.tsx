@@ -106,6 +106,12 @@ function UsersContent({ company }: { company: Company }) {
     [members],
   );
 
+  function memberErrorMessage(message: string): string {
+    return message.includes("ultimo_admin_protegido")
+      ? "Esta operação não pode ser concluída porque a empresa precisa manter pelo menos um administrador ativo."
+      : message;
+  }
+
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -139,7 +145,7 @@ function UsersContent({ company }: { company: Company }) {
       .update({ role })
       .eq("id", member.id);
     if (error) {
-      toast.error(error.message);
+      toast.error(memberErrorMessage(error.message));
     } else {
       toast.success("Papel atualizado.");
       queryClient.invalidateQueries({ queryKey: ["members", company.id] });
@@ -163,7 +169,7 @@ function UsersContent({ company }: { company: Company }) {
       .update({ status: next })
       .eq("id", toggleTarget.id);
     if (error) {
-      toast.error(error.message);
+      toast.error(memberErrorMessage(error.message));
     } else {
       toast.success(next === "inativo" ? "Acesso revogado." : "Acesso restaurado.");
       queryClient.invalidateQueries({ queryKey: ["members", company.id] });
