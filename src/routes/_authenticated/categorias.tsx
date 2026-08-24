@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Lock, Pencil, Plus, Tags } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
@@ -13,6 +13,7 @@ import {
   APP_NAME,
   RECORD_STATUS_LABELS,
   type Category,
+  type Company,
   type Subcategory,
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,15 @@ export const Route = createFileRoute("/_authenticated/categorias")({
 });
 
 function CategoriesPage() {
-  const { company, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <CategoriesContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function CategoriesContent({ company }: { company: Company }) {
+  const { hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const canManage = hasPermission("category.manage");
 

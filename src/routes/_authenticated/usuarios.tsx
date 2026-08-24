@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Mail, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
@@ -16,6 +16,7 @@ import {
   RECORD_STATUS_LABELS,
   ROLE_LABELS,
   type AppRole,
+  type Company,
 } from "@/lib/domain";
 import { formatDateTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,15 @@ type MemberRow = {
 };
 
 function UsersPage() {
-  const { company, user, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <UsersContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function UsersContent({ company }: { company: Company }) {
+  const { user, hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const invite = useServerFn(inviteMember);
 

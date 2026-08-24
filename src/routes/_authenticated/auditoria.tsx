@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, ScrollText } from "lucide-react";
 
-import { AccessDenied, AppShell, EmptyState } from "@/components/app-shell";
+import { AccessDenied, AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -11,6 +11,7 @@ import {
   AUDIT_ACTION_LABELS,
   AUDIT_ENTITY_LABELS,
   type AuditEntry,
+  type Company,
 } from "@/lib/domain";
 import { formatDateTime } from "@/lib/format";
 import { Input } from "@/components/ui/input";

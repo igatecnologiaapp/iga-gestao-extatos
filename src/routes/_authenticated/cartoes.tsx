@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Loader2, Pencil, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { useCompany } from "@/lib/company-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import {
   type Card,
   type CardStatus,
   type CardType,
+  type Company,
 } from "@/lib/domain";
 import { formatBRL, maskCard, parseBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,15 @@ type FormState = {
 };
 
 function CardsPage() {
-  const { company, user, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <CardsContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function CardsContent({ company }: { company: Company }) {
+  const { user, hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);

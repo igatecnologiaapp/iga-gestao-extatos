@@ -10,10 +10,10 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { AppShell } from "@/components/app-shell";
+import { AppShell, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
 import { supabase } from "@/integrations/supabase/client";
-import { APP_NAME, AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS } from "@/lib/domain";
+import { APP_NAME, AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, type Company } from "@/lib/domain";
 import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -46,8 +46,16 @@ function useCount(table: string, companyId: string, onlyActive = true) {
 }
 
 function DashboardPage() {
-  const { company, hasPermission } = useCompany();
-  const companyId = company!.id;
+  return (
+    <RequireCompany>
+      {({ company }) => <DashboardContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function DashboardContent({ company }: { company: Company }) {
+  const { hasPermission } = useCompany();
+  const companyId = company.id;
 
   const institutions = useCount("financial_institutions", companyId);
   const accounts = useCount("bank_accounts", companyId);
