@@ -95,7 +95,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="px-4 pb-4">
         {memberships.length > 1 ? (
-          <Select value={company?.id} onValueChange={setCompanyId}>
+          <Select value={company?.id ?? ""} onValueChange={setCompanyId}>
             <SelectTrigger className="w-full border-sidebar-border bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent">
               <SelectValue placeholder="Empresa" />
             </SelectTrigger>
