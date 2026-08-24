@@ -16,6 +16,7 @@ export type Membership = {
 type CompanyContextValue = {
   user: User | null;
   memberships: Membership[];
+  hasOnlyInactiveMemberships: boolean;
   company: Company | null;
   role: AppRole | null;
   permissions: Set<string>;
@@ -73,14 +74,19 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         .from("user_roles")
         .select("id, company_id, role, status, companies(*)")
         .eq("user_id", user!.id)
-        .eq("status", "ativo")
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as Membership[];
     },
   });
 
-  const memberships = membershipsQuery.data ?? [];
+  const allMemberships = membershipsQuery.data ?? [];
+  const memberships = useMemo(
+    () => allMemberships.filter((m) => m.status === "ativo"),
+    [allMemberships],
+  );
+  const hasOnlyInactiveMemberships =
+    membershipsQuery.isSuccess && allMemberships.length > 0 && memberships.length === 0;
 
   const company = useMemo(() => {
     if (memberships.length === 0) return null;
@@ -115,6 +121,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const value: CompanyContextValue = {
     user,
     memberships,
+    hasOnlyInactiveMemberships,
     company,
     role,
     permissions,
