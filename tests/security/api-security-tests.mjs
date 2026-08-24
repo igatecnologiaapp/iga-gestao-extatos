@@ -219,9 +219,9 @@ async function main() {
     record("STO-02", "Documentos protegidos por políticas de acesso por empresa", ">= 4", Number(stoPolicies) >= 4, `obtido: ${stoPolicies}`);
 
   // ============ ANON — nenhum acesso sem login ============
-  await count("ANON-01", "Visitante anônimo não lê contas bancárias", () => anon.from("bank_accounts").select("id"), 0);
-  await count("ANON-02", "Visitante anônimo não lê empresas", () => anon.from("companies").select("id"), 0);
-  await count("ANON-03", "Visitante anônimo não lê a trilha de auditoria", () => anon.from("audit_log").select("id"), 0);
+  await deny("ANON-01", "Visitante anônimo não lê contas bancárias", () => anon.from("bank_accounts").select("id"));
+  await deny("ANON-02", "Visitante anônimo não lê empresas", () => anon.from("companies").select("id"));
+  await deny("ANON-03", "Visitante anônimo não lê a trilha de auditoria", () => anon.from("audit_log").select("id"));
   await deny("ANON-04", "Visitante anônimo não cria empresa", () => anon.from("companies").insert({ name: "invasor" }).select());
   await deny("ANON-05", "Visitante anônimo não lê documentos do storage", () =>
     anon.storage.from("financial-documents").list(ids.alfa).then((r) => ({ data: r.data, error: r.error })));
