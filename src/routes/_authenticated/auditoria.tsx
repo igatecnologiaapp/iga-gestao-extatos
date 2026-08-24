@@ -66,7 +66,15 @@ function summarize(entry: AuditEntry): string {
 }
 
 function AuditPage() {
-  const { company, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <AuditContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function AuditContent({ company }: { company: Company }) {
+  const { hasPermission } = useCompany();
   const allowed = hasPermission("audit.view");
 
   const [entityFilter, setEntityFilter] = useState<string>("all");
