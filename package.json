@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run",
+    "test:security": "psql \"$SUPABASE_DB_URL\" -v ON_ERROR_STOP=1 -f tests/security/foundation-tests.sql"
   },
   "overrides": {
     "rolldown": "1.2.1"
