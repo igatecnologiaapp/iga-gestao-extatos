@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Lock, Pencil, Plus, Tags } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
@@ -13,6 +13,7 @@ import {
   APP_NAME,
   RECORD_STATUS_LABELS,
   type Category,
+  type Company,
   type Subcategory,
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,15 @@ export const Route = createFileRoute("/_authenticated/categorias")({
 });
 
 function CategoriesPage() {
-  const { company, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <CategoriesContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function CategoriesContent({ company }: { company: Company }) {
+  const { hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const canManage = hasPermission("category.manage");
 
@@ -58,12 +67,12 @@ function CategoriesPage() {
   } | null>(null);
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories", company!.id],
+    queryKey: ["categories", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transaction_categories")
         .select("*")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("is_system", { ascending: false })
         .order("name");
       if (error) throw error;
@@ -72,12 +81,12 @@ function CategoriesPage() {
   });
 
   const { data: subcategories } = useQuery({
-    queryKey: ["subcategories", company!.id],
+    queryKey: ["subcategories", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transaction_subcategories")
         .select("*")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("name");
       if (error) throw error;
       return data ?? [];
@@ -118,10 +127,10 @@ function CategoriesPage() {
         } else {
           const { error } = await supabase
             .from("transaction_categories")
-            .insert({ company_id: company!.id, name, is_system: false });
+            .insert({ company_id: company.id, name, is_system: false });
           if (error) throw error;
         }
-        await queryClient.invalidateQueries({ queryKey: ["categories", company!.id] });
+        await queryClient.invalidateQueries({ queryKey: ["categories", company.id] });
       } else {
         if (dialog.editing) {
           const { error } = await supabase
@@ -131,13 +140,13 @@ function CategoriesPage() {
           if (error) throw error;
         } else {
           const { error } = await supabase.from("transaction_subcategories").insert({
-            company_id: company!.id,
+            company_id: company.id,
             category_id: dialog.parent!.id,
             name,
           });
           if (error) throw error;
         }
-        await queryClient.invalidateQueries({ queryKey: ["subcategories", company!.id] });
+        await queryClient.invalidateQueries({ queryKey: ["subcategories", company.id] });
       }
       toast.success("Salvo com sucesso.");
       setDialog(null);
@@ -160,7 +169,7 @@ function CategoriesPage() {
     } else {
       toast.success(next === "inativo" ? "Inativado." : "Reativado.");
       queryClient.invalidateQueries({
-        queryKey: [kind === "category" ? "categories" : "subcategories", company!.id],
+        queryKey: [kind === "category" ? "categories" : "subcategories", company.id],
       });
     }
     setToggleTarget(null);

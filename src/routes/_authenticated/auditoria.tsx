@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, ScrollText } from "lucide-react";
 
-import { AccessDenied, AppShell, EmptyState } from "@/components/app-shell";
+import { AccessDenied, AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -11,6 +11,7 @@ import {
   AUDIT_ACTION_LABELS,
   AUDIT_ENTITY_LABELS,
   type AuditEntry,
+  type Company,
 } from "@/lib/domain";
 import { formatDateTime } from "@/lib/format";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,15 @@ function summarize(entry: AuditEntry): string {
 }
 
 function AuditPage() {
-  const { company, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <AuditContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function AuditContent({ company }: { company: Company }) {
+  const { hasPermission } = useCompany();
   const allowed = hasPermission("audit.view");
 
   const [entityFilter, setEntityFilter] = useState<string>("all");
@@ -74,13 +83,13 @@ function AuditPage() {
   const [dateTo, setDateTo] = useState("");
 
   const { data: entries, isLoading } = useQuery({
-    queryKey: ["audit", company!.id, entityFilter, actionFilter, dateFrom, dateTo],
+    queryKey: ["audit", company.id, entityFilter, actionFilter, dateFrom, dateTo],
     enabled: allowed,
     queryFn: async () => {
       let q = supabase
         .from("audit_log")
         .select("*")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at", { ascending: false })
         .limit(200);
       if (entityFilter !== "all") q = q.eq("entity", entityFilter);

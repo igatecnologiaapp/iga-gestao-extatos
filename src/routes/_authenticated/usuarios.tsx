@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Mail, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
@@ -16,6 +16,7 @@ import {
   RECORD_STATUS_LABELS,
   ROLE_LABELS,
   type AppRole,
+  type Company,
 } from "@/lib/domain";
 import { formatDateTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,15 @@ type MemberRow = {
 };
 
 function UsersPage() {
-  const { company, user, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <UsersContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function UsersContent({ company }: { company: Company }) {
+  const { user, hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const invite = useServerFn(inviteMember);
 
@@ -80,12 +89,12 @@ function UsersPage() {
   const isAdmin = hasPermission("member.manage");
 
   const { data: members, isLoading } = useQuery({
-    queryKey: ["members", company!.id],
+    queryKey: ["members", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_roles")
         .select("id, user_id, role, status, created_at, profiles(email, full_name)")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as unknown as MemberRow[];
@@ -97,20 +106,26 @@ function UsersPage() {
     [members],
   );
 
+  function memberErrorMessage(message: string): string {
+    return message.includes("ultimo_admin_protegido")
+      ? "Esta operação não pode ser concluída porque a empresa precisa manter pelo menos um administrador ativo."
+      : message;
+  }
+
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
       await invite({
         data: {
-          companyId: company!.id,
+          companyId: company.id,
           email: inviteForm.email,
           fullName: inviteForm.fullName,
           role: inviteForm.role,
         },
       });
       toast.success("Convite enviado e usuário vinculado à empresa.");
-      await queryClient.invalidateQueries({ queryKey: ["members", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["members", company.id] });
       setInviteOpen(false);
       setInviteForm({ fullName: "", email: "", role: "consulta" });
     } catch (err) {
@@ -130,10 +145,10 @@ function UsersPage() {
       .update({ role })
       .eq("id", member.id);
     if (error) {
-      toast.error(error.message);
+      toast.error(memberErrorMessage(error.message));
     } else {
       toast.success("Papel atualizado.");
-      queryClient.invalidateQueries({ queryKey: ["members", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["members", company.id] });
     }
   }
 
@@ -154,10 +169,10 @@ function UsersPage() {
       .update({ status: next })
       .eq("id", toggleTarget.id);
     if (error) {
-      toast.error(error.message);
+      toast.error(memberErrorMessage(error.message));
     } else {
       toast.success(next === "inativo" ? "Acesso revogado." : "Acesso restaurado.");
-      queryClient.invalidateQueries({ queryKey: ["members", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["members", company.id] });
     }
     setToggleTarget(null);
   }

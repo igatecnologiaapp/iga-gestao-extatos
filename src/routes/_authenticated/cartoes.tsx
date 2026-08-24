@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Loader2, Pencil, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { useCompany } from "@/lib/company-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import {
   type Card,
   type CardStatus,
   type CardType,
+  type Company,
 } from "@/lib/domain";
 import { formatBRL, maskCard, parseBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,15 @@ type FormState = {
 };
 
 function CardsPage() {
-  const { company, user, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <CardsContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function CardsContent({ company }: { company: Company }) {
+  const { user, hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -83,12 +92,12 @@ function CardsPage() {
   const canUpdate = hasPermission("card.update");
 
   const { data: institutions } = useQuery({
-    queryKey: ["institutions", company!.id],
+    queryKey: ["institutions", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_institutions")
         .select("id, name")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .eq("status", "ativo")
         .order("name");
       if (error) throw error;
@@ -97,12 +106,12 @@ function CardsPage() {
   });
 
   const { data: cards, isLoading } = useQuery({
-    queryKey: ["cards", company!.id],
+    queryKey: ["cards", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
         .select("*, financial_institutions!institution_id(name)")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as unknown as CardWithIssuer[];
@@ -195,13 +204,13 @@ function CardsPage() {
       } else {
         const { error } = await supabase.from("cards").insert({
           ...payload,
-          company_id: company!.id,
+          company_id: company.id,
           created_by: user?.id ?? null,
         });
         if (error) throw error;
         toast.success("Cartão cadastrado.");
       }
-      await queryClient.invalidateQueries({ queryKey: ["cards", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["cards", company.id] });
       await queryClient.invalidateQueries({ queryKey: ["count"] });
       setDialogOpen(false);
     } catch (err) {
@@ -217,7 +226,7 @@ function CardsPage() {
       toast.error(error.message);
     } else {
       toast.success(`Status alterado para ${CARD_STATUS_LABELS[status]}.`);
-      queryClient.invalidateQueries({ queryKey: ["cards", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["cards", company.id] });
     }
   }
 

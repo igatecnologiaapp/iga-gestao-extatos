@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Landmark, Loader2, Pencil, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
@@ -13,6 +13,7 @@ import {
   APP_NAME,
   INSTITUTION_TYPE_LABELS,
   RECORD_STATUS_LABELS,
+  type Company,
   type Institution,
   type InstitutionType,
 } from "@/lib/domain";
@@ -57,7 +58,15 @@ type FormState = { code: string; name: string; type: InstitutionType };
 const EMPTY_FORM: FormState = { code: "", name: "", type: "banco" };
 
 function InstitutionsPage() {
-  const { company, user, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <InstitutionsContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function InstitutionsContent({ company }: { company: Company }) {
+  const { user, hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -70,12 +79,12 @@ function InstitutionsPage() {
   const canUpdate = hasPermission("institution.update");
 
   const { data: institutions, isLoading } = useQuery({
-    queryKey: ["institutions", company!.id],
+    queryKey: ["institutions", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_institutions")
         .select("*")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("name");
       if (error) throw error;
       return data ?? [];
@@ -118,7 +127,7 @@ function InstitutionsPage() {
         toast.success("Instituição atualizada.");
       } else {
         const { error } = await supabase.from("financial_institutions").insert({
-          company_id: company!.id,
+          company_id: company.id,
           code: form.code || null,
           name: form.name,
           type: form.type,
@@ -127,7 +136,7 @@ function InstitutionsPage() {
         if (error) throw error;
         toast.success("Instituição cadastrada.");
       }
-      await queryClient.invalidateQueries({ queryKey: ["institutions", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["institutions", company.id] });
       await queryClient.invalidateQueries({ queryKey: ["count"] });
       setDialogOpen(false);
     } catch (err) {
@@ -147,7 +156,7 @@ function InstitutionsPage() {
       toast.error(error.message);
     } else {
       toast.success(next === "inativo" ? "Instituição inativada." : "Instituição reativada.");
-      queryClient.invalidateQueries({ queryKey: ["institutions", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["institutions", company.id] });
     }
     setToggleTarget(null);
   }

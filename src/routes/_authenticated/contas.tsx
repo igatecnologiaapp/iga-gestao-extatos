@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Pencil, Plus, Search, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/app-shell";
+import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
@@ -15,6 +15,7 @@ import {
   RECORD_STATUS_LABELS,
   type AccountType,
   type BankAccount,
+  type Company,
 } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,15 @@ type FormState = {
 };
 
 function AccountsPage() {
-  const { company, user, hasPermission } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <AccountsContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function AccountsContent({ company }: { company: Company }) {
+  const { user, hasPermission } = useCompany();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -81,12 +90,12 @@ function AccountsPage() {
   const canUpdate = hasPermission("account.update");
 
   const { data: institutions } = useQuery({
-    queryKey: ["institutions", company!.id],
+    queryKey: ["institutions", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_institutions")
         .select("id, name, status")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .eq("status", "ativo")
         .order("name");
       if (error) throw error;
@@ -95,12 +104,12 @@ function AccountsPage() {
   });
 
   const { data: accounts, isLoading } = useQuery({
-    queryKey: ["accounts", company!.id],
+    queryKey: ["accounts", company.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bank_accounts")
         .select("*, financial_institutions(name)")
-        .eq("company_id", company!.id)
+        .eq("company_id", company.id)
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as AccountWithInstitution[];
@@ -178,13 +187,13 @@ function AccountsPage() {
       } else {
         const { error } = await supabase.from("bank_accounts").insert({
           ...payload,
-          company_id: company!.id,
+          company_id: company.id,
           created_by: user?.id ?? null,
         });
         if (error) throw error;
         toast.success("Conta cadastrada.");
       }
-      await queryClient.invalidateQueries({ queryKey: ["accounts", company!.id] });
+      await queryClient.invalidateQueries({ queryKey: ["accounts", company.id] });
       await queryClient.invalidateQueries({ queryKey: ["count"] });
       setDialogOpen(false);
     } catch (err) {
@@ -204,7 +213,7 @@ function AccountsPage() {
       toast.error(error.message);
     } else {
       toast.success(next === "inativo" ? "Conta inativada." : "Conta reativada.");
-      queryClient.invalidateQueries({ queryKey: ["accounts", company!.id] });
+      queryClient.invalidateQueries({ queryKey: ["accounts", company.id] });
     }
     setToggleTarget(null);
   }

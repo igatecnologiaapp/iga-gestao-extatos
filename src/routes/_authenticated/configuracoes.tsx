@@ -4,10 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Building2, Loader2, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/app-shell";
+import { AppShell, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
 import { supabase } from "@/integrations/supabase/client";
-import { APP_NAME, PERMISSION_LABELS, ROLE_LABELS } from "@/lib/domain";
+import { APP_NAME, PERMISSION_LABELS, ROLE_LABELS, type Company } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,13 +23,21 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
 });
 
 function SettingsPage() {
-  const { company, user, role, permissions, hasPermission, setCompanyId } = useCompany();
+  return (
+    <RequireCompany>
+      {({ company }) => <SettingsContent company={company} />}
+    </RequireCompany>
+  );
+}
+
+function SettingsContent({ company }: { company: Company }) {
+  const { user, role, permissions, hasPermission, setCompanyId } = useCompany();
   const queryClient = useQueryClient();
   const canManageCompany = hasPermission("company.manage");
 
   const [companyForm, setCompanyForm] = useState({
-    name: company!.name,
-    document: company!.document ?? "",
+    name: company.name,
+    document: company.document ?? "",
   });
   const [savingCompany, setSavingCompany] = useState(false);
 
@@ -48,10 +56,10 @@ function SettingsPage() {
           name: companyForm.name,
           document: companyForm.document || null,
         })
-        .eq("id", company!.id);
+        .eq("id", company.id);
       if (error) throw error;
       toast.success("Dados da empresa atualizados.");
-      setCompanyId(company!.id);
+      setCompanyId(company.id);
       await queryClient.invalidateQueries({ queryKey: ["memberships", user?.id] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
