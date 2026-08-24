@@ -95,7 +95,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="px-4 pb-4">
         {memberships.length > 1 ? (
-          <Select value={company?.id} onValueChange={setCompanyId}>
+          <Select value={company?.id ?? ""} onValueChange={setCompanyId}>
             <SelectTrigger className="w-full border-sidebar-border bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent">
               <SelectValue placeholder="Empresa" />
             </SelectTrigger>
@@ -160,7 +160,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-sidebar-border p-4">
         <div className="mb-2 min-w-0 px-1">
           <p className="truncate text-sm font-medium text-sidebar-accent-foreground">
-            {(user?.user_metadata?.full_name as string | undefined) || user?.email}
+            {(user?.user_metadata?.["full_name"] as string | undefined) || user?.email}
           </p>
           <p className="text-[11px] text-sidebar-foreground/55">
             {role ? ROLE_LABELS[role] : ""}
