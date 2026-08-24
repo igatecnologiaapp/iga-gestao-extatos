@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
-    "test:security": "psql \"$SUPABASE_DB_URL\" -v ON_ERROR_STOP=1 -f tests/security/foundation-tests.sql"
+    "test:security": "bun tests/security/api-security-tests.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
