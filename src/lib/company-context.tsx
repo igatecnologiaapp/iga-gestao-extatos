@@ -101,11 +101,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   const company = useMemo(() => {
     if (memberships.length === 0) return null;
-    const stored =
-      typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-    const found = memberships.find(
-      (m) => m.company_id === (selectedCompanyId ?? stored),
-    );
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+    const found = memberships.find((m) => m.company_id === (selectedCompanyId ?? stored));
     return (found ?? memberships[0])?.companies ?? null;
   }, [memberships, selectedCompanyId]);
 

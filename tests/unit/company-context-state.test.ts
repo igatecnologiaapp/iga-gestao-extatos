@@ -23,16 +23,24 @@ describe("resolveCompanyContextStatus", () => {
   });
 
   it("transforma erro de user_roles em estado controlado", () => {
-    const status = resolveCompanyContextStatus({ ...base, membershipsError: new Error("RLS negou") });
+    const status = resolveCompanyContextStatus({
+      ...base,
+      membershipsError: new Error("RLS negou"),
+    });
     expect(status).toEqual({ kind: "error", message: "RLS negou" });
   });
 
   it("distingue usuário sem vínculo", () => {
-    expect(resolveCompanyContextStatus({ ...base, allMembershipsCount: 0, activeMembershipsCount: 0 }).kind).toBe("no-membership");
+    expect(
+      resolveCompanyContextStatus({ ...base, allMembershipsCount: 0, activeMembershipsCount: 0 })
+        .kind,
+    ).toBe("no-membership");
   });
 
   it("distingue vínculo inativo", () => {
-    expect(resolveCompanyContextStatus({ ...base, activeMembershipsCount: 0 }).kind).toBe("inactive-membership");
+    expect(resolveCompanyContextStatus({ ...base, activeMembershipsCount: 0 }).kind).toBe(
+      "inactive-membership",
+    );
   });
 
   it("detecta relacionamento de empresa ausente", () => {
@@ -45,11 +53,18 @@ describe("resolveCompanyContextStatus", () => {
   });
 
   it("transforma erro de permissões em estado controlado", () => {
-    const status = resolveCompanyContextStatus({ ...base, permissionsError: { message: "permissions negadas" } });
+    const status = resolveCompanyContextStatus({
+      ...base,
+      permissionsError: { message: "permissions negadas" },
+    });
     expect(status).toEqual({ kind: "error", message: "permissions negadas" });
   });
 
   it("libera somente após empresa, papel e permissões estarem válidos", () => {
-    expect(resolveCompanyContextStatus(base)).toEqual({ kind: "ready", company: activeCompany, role: "admin" });
+    expect(resolveCompanyContextStatus(base)).toEqual({
+      kind: "ready",
+      company: activeCompany,
+      role: "admin",
+    });
   });
 });

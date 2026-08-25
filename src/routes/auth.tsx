@@ -130,8 +130,8 @@ function AuthPage() {
             Extratos e faturas organizados, com rastreabilidade total.
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-sidebar-foreground/75">
-            Centralize contas bancárias e cartões em um ambiente seguro, multiempresa e
-            auditável — pronto para importação de extratos, conciliação e análise de custos.
+            Centralize contas bancárias e cartões em um ambiente seguro, multiempresa e auditável —
+            pronto para importação de extratos, conciliação e análise de custos.
           </p>
           <ul className="mt-8 space-y-3 text-sm">
             <li className="flex items-center gap-3">

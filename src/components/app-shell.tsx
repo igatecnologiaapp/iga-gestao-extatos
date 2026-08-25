@@ -246,8 +246,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
         {visibleItems.map((item) => {
-          const active =
-            item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+          const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link
               key={item.to}
@@ -289,9 +288,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <p className="truncate text-sm font-medium text-sidebar-accent-foreground">
             {(user?.user_metadata?.["full_name"] as string | undefined) || user?.email}
           </p>
-          <p className="text-[11px] text-sidebar-foreground/55">
-            {role ? ROLE_LABELS[role] : ""}
-          </p>
+          <p className="text-[11px] text-sidebar-foreground/55">{role ? ROLE_LABELS[role] : ""}</p>
         </div>
         <Button
           type="button"
@@ -333,10 +330,7 @@ export function AppShell({
       {/* Sidebar mobile */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-foreground/40"
-            onClick={() => setMobileOpen(false)}
-          />
+          <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] shadow-xl">
             <button
               onClick={() => setMobileOpen(false)}
@@ -361,9 +355,7 @@ export function AppShell({
               <Menu className="h-5 w-5" />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold tracking-tight text-foreground">
-                {title}
-              </h1>
+              <h1 className="truncate text-lg font-bold tracking-tight text-foreground">{title}</h1>
               {description && (
                 <p className="truncate text-xs text-muted-foreground">{description}</p>
               )}
