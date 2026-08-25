@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Building2,
-  ChevronsUpDown,
   CreditCard,
   FileText,
   Landmark,
@@ -194,6 +193,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, memberships, company, setCompanyId, role, hasPermission } = useCompany();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.permission || hasPermission(item.permission),
@@ -286,16 +293,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             {role ? ROLE_LABELS[role] : ""}
           </p>
         </div>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            navigate({ to: "/auth" });
-          }}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={signOut}
+          className="w-full justify-start text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
         >
           <LogOut className="h-4 w-4" />
           Sair
-        </button>
+        </Button>
       </div>
     </div>
   );

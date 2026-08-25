@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: `Entrar — ${APP_NAME}` },
@@ -18,6 +19,13 @@ export const Route = createFileRoute("/auth")({
         name: "description",
         content: "Acesse sua conta para gerenciar extratos, contas e cartões da sua empresa.",
       },
+      { property: "og:title", content: `Entrar — ${APP_NAME}` },
+      {
+        property: "og:description",
+        content: "Acesse sua conta para gerenciar extratos, contas e cartões da sua empresa.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
@@ -35,8 +43,8 @@ function AuthPage() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
         navigate({ to: "/" });
       } else {
         setCheckingSession(false);
@@ -51,6 +59,10 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        const { data: validated, error: validationError } = await supabase.auth.getUser();
+        if (validationError || !validated.user) {
+          throw validationError ?? new Error("A sessão não pôde ser validada.");
+        }
         navigate({ to: "/" });
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
