@@ -10,10 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/redefinir-senha")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: `Redefinir senha — ${APP_NAME}` },
       { name: "description", content: "Defina uma nova senha para acessar sua conta." },
+      { property: "og:title", content: `Redefinir senha — ${APP_NAME}` },
+      { property: "og:description", content: "Defina uma nova senha para acessar sua conta." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ResetPasswordPage,

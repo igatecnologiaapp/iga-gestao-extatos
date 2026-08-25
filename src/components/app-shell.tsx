@@ -1,10 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Building2,
-  ChevronsUpDown,
   CreditCard,
   FileText,
   Landmark,
@@ -35,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 type NavItem = {
   to: string;
@@ -71,9 +71,26 @@ export function FullScreenLoader() {
   );
 }
 
-function BlockedAccessScreen({ title, description }: { title: string; description: string }) {
+function ContextStatusScreen({
+  title,
+  description,
+  onRetry,
+}: {
+  title: string;
+  description: string;
+  onRetry?: () => Promise<void>;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [retrying, setRetrying] = useState(false);
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
@@ -82,18 +99,28 @@ function BlockedAccessScreen({ title, description }: { title: string; descriptio
         </div>
         <h1 className="mt-4 font-display text-lg font-bold text-foreground">{title}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
-        <button
-          onClick={async () => {
-            await queryClient.cancelQueries();
-            queryClient.clear();
-            await supabase.auth.signOut();
-            navigate({ to: "/auth", replace: true });
-          }}
-          className="mt-6 inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          <LogOut className="h-4 w-4" />
-          Sair da conta
-        </button>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {onRetry && (
+            <Button
+              onClick={async () => {
+                setRetrying(true);
+                try {
+                  await onRetry();
+                } finally {
+                  setRetrying(false);
+                }
+              }}
+              disabled={retrying}
+            >
+              {retrying && <Loader2 className="h-4 w-4 animate-spin" />}
+              Tentar novamente
+            </Button>
+          )}
+          <Button variant="outline" onClick={signOut}>
+            <LogOut className="h-4 w-4" />
+            Sair da conta
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -114,40 +141,66 @@ export function RequireCompany({
 }: {
   children: (ctx: { company: Company; role: AppRole | null }) => ReactNode;
 }) {
-  const { company, role, memberships, hasOnlyInactiveMemberships, loading } = useCompany();
+  const { status, retry } = useCompany();
 
-  if (loading) return <FullScreenLoader />;
+  if (status.kind === "loading") return <FullScreenLoader />;
 
-  if (memberships.length === 0) {
-    if (hasOnlyInactiveMemberships) {
-      return (
-        <BlockedAccessScreen
-          title="Seu acesso está desativado"
-          description="Seu vínculo com a empresa foi desativado. Procure um administrador da empresa para reativar seu acesso."
-        />
-      );
-    }
-    return <Navigate to="/onboarding" replace />;
+  if (status.kind === "error") {
+    console.error("[CompanyProvider] Contexto empresarial indisponível", status.message);
+    return (
+      <ContextStatusScreen
+        title="Não foi possível carregar seu acesso"
+        description="Houve uma falha ao consultar sua empresa e suas permissões. Tente novamente ou saia para retornar ao login."
+        onRetry={retry}
+      />
+    );
   }
 
-  if (!company) return <FullScreenLoader />;
+  if (status.kind === "no-membership") return <Navigate to="/onboarding" replace />;
 
-  if (company.status !== "ativo") {
+  if (status.kind === "inactive-membership") {
     return (
-      <BlockedAccessScreen
+      <ContextStatusScreen
+        title="Seu acesso está desativado"
+        description="Seu vínculo com a empresa foi desativado. Procure um administrador da empresa para reativar seu acesso."
+      />
+    );
+  }
+
+  if (status.kind === "invalid-membership") {
+    return (
+      <ContextStatusScreen
+        title="Vínculo empresarial inconsistente"
+        description="Seu acesso existe, mas a empresa ou o papel vinculado não pôde ser identificado. Tente novamente ou contate o suporte."
+        onRetry={retry}
+      />
+    );
+  }
+
+  if (status.kind === "inactive-company") {
+    return (
+      <ContextStatusScreen
         title="Empresa inativa"
         description="Esta empresa está inativa no momento. Entre em contato com o suporte para regularizar o acesso."
       />
     );
   }
 
-  return <>{children({ company, role })}</>;
+  return <>{children({ company: status.company, role: status.role })}</>;
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, memberships, company, setCompanyId, role, hasPermission } = useCompany();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.permission || hasPermission(item.permission),
@@ -193,8 +246,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
         {visibleItems.map((item) => {
-          const active =
-            item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+          const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link
               key={item.to}
@@ -236,20 +288,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <p className="truncate text-sm font-medium text-sidebar-accent-foreground">
             {(user?.user_metadata?.["full_name"] as string | undefined) || user?.email}
           </p>
-          <p className="text-[11px] text-sidebar-foreground/55">
-            {role ? ROLE_LABELS[role] : ""}
-          </p>
+          <p className="text-[11px] text-sidebar-foreground/55">{role ? ROLE_LABELS[role] : ""}</p>
         </div>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            navigate({ to: "/auth" });
-          }}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={signOut}
+          className="w-full justify-start text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
         >
           <LogOut className="h-4 w-4" />
           Sair
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -266,17 +315,10 @@ export function AppShell({
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const { memberships, company, loading } = useCompany();
-  const navigate = useNavigate();
+  const { company } = useCompany();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    if (!loading && memberships.length === 0) {
-      navigate({ to: "/onboarding" });
-    }
-  }, [loading, memberships.length, navigate]);
-
-  if (loading || !company) return <FullScreenLoader />;
+  if (!company) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -288,10 +330,7 @@ export function AppShell({
       {/* Sidebar mobile */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-foreground/40"
-            onClick={() => setMobileOpen(false)}
-          />
+          <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] shadow-xl">
             <button
               onClick={() => setMobileOpen(false)}
@@ -316,9 +355,7 @@ export function AppShell({
               <Menu className="h-5 w-5" />
             </button>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold tracking-tight text-foreground">
-                {title}
-              </h1>
+              <h1 className="truncate text-lg font-bold tracking-tight text-foreground">{title}</h1>
               {description && (
                 <p className="truncate text-xs text-muted-foreground">{description}</p>
               )}

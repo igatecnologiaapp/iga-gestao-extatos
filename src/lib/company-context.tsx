@@ -4,6 +4,10 @@ import type { User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole, Company } from "@/lib/domain";
+import {
+  resolveCompanyContextStatus,
+  type CompanyContextStatus,
+} from "@/lib/company-context-state";
 
 export type Membership = {
   id: string;
@@ -23,6 +27,8 @@ type CompanyContextValue = {
   hasPermission: (key: string) => boolean;
   setCompanyId: (id: string) => void;
   loading: boolean;
+  status: CompanyContextStatus;
+  retry: () => Promise<void>;
 };
 
 const CompanyContext = createContext<CompanyContextValue | null>(null);
@@ -53,7 +59,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   // Garante que o perfil exista (não usamos trigger no schema auth por segurança).
   useEffect(() => {
     if (!user) return;
-    supabase
+    void supabase
       .from("profiles")
       .upsert(
         {
@@ -63,17 +69,22 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         },
         { onConflict: "id" },
       )
-        .then(() => undefined);
+      .then(({ error }) => {
+        if (error) console.error("[CompanyProvider] Falha ao sincronizar perfil", error);
+      });
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const membershipsQuery = useQuery({
     queryKey: ["memberships", user?.id],
     enabled: !!user,
+    retry: 1,
     queryFn: async () => {
+      const userId = user?.id;
+      if (!userId) return [];
       const { data, error } = await supabase
         .from("user_roles")
         .select("id, company_id, role, status, companies(*)")
-        .eq("user_id", user!.id)
+        .eq("user_id", userId)
         .order("created_at");
       if (error) throw error;
       return (data ?? []) as Membership[];
@@ -90,11 +101,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   const company = useMemo(() => {
     if (memberships.length === 0) return null;
-    const stored =
-      typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-    const found = memberships.find(
-      (m) => m.company_id === (selectedCompanyId ?? stored),
-    );
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+    const found = memberships.find((m) => m.company_id === (selectedCompanyId ?? stored));
     return (found ?? memberships[0])?.companies ?? null;
   }, [memberships, selectedCompanyId]);
 
@@ -106,17 +114,33 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const permissionsQuery = useQuery({
     queryKey: ["role-permissions", role],
     enabled: !!role,
+    retry: 1,
     queryFn: async () => {
+      const selectedRole = role;
+      if (!selectedRole) return new Set<string>();
       const { data, error } = await supabase
         .from("role_permissions")
         .select("permission_key")
-        .eq("role", role!);
+        .eq("role", selectedRole);
       if (error) throw error;
       return new Set((data ?? []).map((r) => r.permission_key));
     },
   });
 
   const permissions = permissionsQuery.data ?? new Set<string>();
+
+  const status = resolveCompanyContextStatus({
+    userLoaded,
+    hasUser: !!user,
+    membershipsLoading: membershipsQuery.isLoading,
+    membershipsError: membershipsQuery.error,
+    allMembershipsCount: allMemberships.length,
+    activeMembershipsCount: memberships.length,
+    company,
+    role,
+    permissionsLoading: permissionsQuery.isLoading,
+    permissionsError: permissionsQuery.error,
+  });
 
   const value: CompanyContextValue = {
     user,
@@ -130,7 +154,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setSelectedCompanyId(id);
       if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, id);
     },
-    loading: !userLoaded || (!!user && membershipsQuery.isLoading),
+    loading: status.kind === "loading",
+    status,
+    retry: async () => {
+      await Promise.all([membershipsQuery.refetch(), permissionsQuery.refetch()]);
+    },
   };
 
   return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;
