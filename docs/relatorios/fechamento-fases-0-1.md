@@ -1,0 +1,196 @@
+# RELATÓRIO TÉCNICO — FECHAMENTO DAS FASES 0 E 1
+
+**Sistema:** Gestor de Extratos  
+**Escopo:** Fundação, segurança, auditoria, RBAC e cadastros financeiros  
+**Data da auditoria:** 26/08/2026  
+**Incidente:** P0 — erro de carregamento após login válido
+
+## 1. Parecer executivo
+
+O incidente P0 foi reproduzido, diagnosticado e corrigido. A regressão autenticada executada com o usuário operacional percorreu sessão válida, contexto empresarial, RBAC, Dashboard, recarga da página e logout sem erro de JavaScript ou tela de falha.
+
+As Fases 0 e 1 estão **tecnicamente homologáveis**, com 30 testes unitários, 61 testes de segurança e 1 cenário E2E crítico aprovados. A homologação de negócio permanece dependente da aprovação expressa do responsável pelo produto. Nenhum item das Fases 2 ou posteriores foi implementado.
+
+## 2. Causa raiz do incidente P0
+
+O erro era produzido pela combinação de dois fatores:
+
+1. o estado do contexto empresarial era tratado por verificações parcialmente duplicadas e sem uma máquina de estados explícita, permitindo que carregamento, ausência de vínculo, vínculo inativo e erro de consulta fossem apresentados de forma ambígua;
+2. as telas públicas de autenticação participavam de renderização no servidor, embora dependessem da sessão armazenada no navegador, criando risco de divergência de hidratação durante o redirecionamento pós-login.
+
+A investigação também encontrou diferença entre dados de teste locais e o ambiente ativo. No backend ativo, o usuário operacional possui perfil e um vínculo empresarial ativo; essa condição foi confirmada antes do E2E final.
+
+## 3. Correções aplicadas
+
+- Criada máquina de estados determinística para o contexto: `loading`, `error`, `no-membership`, `inactive-membership`, `invalid-membership`, `inactive-company` e `ready`.
+- Centralizadas em `RequireCompany` as decisões de acesso empresarial e removida do `AppShell` a navegação duplicada para onboarding.
+- Adicionados estado de erro recuperável e ação de nova tentativa para consultas de vínculo e permissões.
+- Mantido o `AppShell` como camada exclusivamente visual após o contexto estar válido.
+- Desativada renderização no servidor em `/auth` e `/redefinir-senha`, rotas que dependem da sessão local do navegador.
+- Após login por e-mail e senha, adicionada validação explícita da identidade antes de navegar.
+- Padronizado o logout com cancelamento de consultas, limpeza do cache protegido, encerramento da sessão e navegação com substituição de histórico.
+- Adicionada regressão E2E executável por `bun run test:e2e:login`.
+
+## 4. Arquitetura
+
+### Tecnologias
+
+- React 19 e TypeScript.
+- TanStack Start/Router para SSR, rotas e funções de servidor.
+- TanStack Query para cache e sincronização de dados.
+- Tailwind CSS v4 e componentes do design system.
+- Lovable Cloud para autenticação, banco PostgreSQL, RLS e storage privado.
+- Vitest para testes unitários e Playwright para regressão E2E.
+
+### Organização
+
+- `src/routes`: rotas públicas e protegidas pelo layout `_authenticated`.
+- `src/components`: shell da aplicação, guardas visuais e componentes de interface.
+- `src/lib`: domínio, contexto multiempresa, máquina de estados e funções de negócio.
+- `src/integrations`: clientes e middleware gerenciados da plataforma.
+- `supabase/migrations`: histórico versionado do esquema e hardening.
+- `tests/unit`, `tests/security` e `tests/e2e`: validações por camada.
+
+## 5. Banco de dados
+
+### Tabelas
+
+| Tabela | Finalidade |
+|---|---|
+| `companies` | Empresas do ambiente multiempresa |
+| `profiles` | Dados de exibição vinculados ao usuário autenticado |
+| `user_roles` | Vínculo usuário–empresa e papel RBAC |
+| `permissions` | Catálogo de permissões granulares |
+| `role_permissions` | Permissões concedidas a cada papel |
+| `financial_institutions` | Bancos, cooperativas, fintechs e administradoras |
+| `bank_accounts` | Contas bancárias por empresa e instituição |
+| `cards` | Cartões com somente os quatro últimos dígitos |
+| `transaction_categories` | Categorias financeiras |
+| `transaction_subcategories` | Subcategorias vinculadas à categoria e empresa |
+| `audit_log` | Trilha imutável de alterações |
+
+### Relacionamentos e integridade
+
+- Recursos financeiros referenciam `companies.id`.
+- Contas e cartões referenciam instituições financeiras.
+- Subcategorias referenciam categorias.
+- Papéis referenciam empresas; permissões de papel referenciam o catálogo de permissões.
+- Triggers impedem referências entre empresas diferentes.
+- `UNIQUE` protege vínculo/papel, permissões por papel, nomes de instituições/categorias e subcategorias.
+- `CHECK` valida dias, limite de crédito, quatro últimos dígitos e alerta de vencimento.
+- O último administrador ativo de cada empresa não pode ser removido, rebaixado ou inativado.
+- Chaves primárias e constraints `UNIQUE` criam os índices necessários nesta etapa; não foram identificados índices funcionais adicionais obrigatórios para o volume da Fase 1.
+
+### Migrações
+
+1. Fundação do schema, dados RBAC, cadastros, RLS, auditoria e storage.
+2. Hardening: funções auxiliares movidas para schema privado e políticas recriadas.
+3. Proteção do último administrador.
+4. Correção da classificação de eventos de auditoria.
+5. Revogação de privilégios de tabelas para visitantes anônimos.
+
+## 6. Segurança
+
+### Autenticação e rotas
+
+- Login por e-mail/senha e Google.
+- Rotas privadas sob layout autenticado com validação de identidade.
+- Recuperação de senha disponível em rota pública dedicada.
+- Sessão validada antes da navegação pós-login.
+- Logout remove consultas e cache protegido antes de encerrar a sessão.
+
+### RLS e isolamento multiempresa
+
+- RLS está ativa em todas as 11 tabelas públicas.
+- Leituras são limitadas à empresa do usuário.
+- Escritas exigem permissões granulares por empresa.
+- Acesso anônimo a dados empresariais é negado.
+- Funções de autorização residem no schema privado e não são expostas pela API pública.
+
+### Storage
+
+- Bucket `financial-documents` é privado.
+- O primeiro segmento do caminho identifica a empresa.
+- Leitura, criação e alteração exigem vínculo ativo; exclusão exige administrador.
+- Nenhuma funcionalidade de importação foi criada nesta rodada.
+
+## 7. Matriz de permissões
+
+| Recurso/Ação | Admin | Financeiro | Consulta | Auditor |
+|---|:---:|:---:|:---:|:---:|
+| Visualizar instituições, contas, cartões e categorias | Sim | Sim | Sim | Sim |
+| Criar/editar/inativar instituições | Sim | Sim | Não | Não |
+| Criar/editar/inativar contas | Sim | Sim | Não | Não |
+| Criar/editar/inativar cartões | Sim | Sim | Não | Não |
+| Gerenciar categorias e subcategorias | Sim | Sim | Não | Não |
+| Visualizar lançamentos futuros | Sim | Sim | Sim | Sim |
+| Gerenciar lançamentos futuros | Sim | Sim | Não | Não |
+| Executar importação/conciliação futura | Sim | Sim | Não | Não |
+| Visualizar relatórios futuros | Sim | Sim | Sim | Sim |
+| Visualizar auditoria | Sim | Não | Não | Sim |
+| Gerenciar empresa e membros | Sim | Não | Não | Não |
+
+As permissões marcadas como futuras existem apenas no catálogo RBAC para preservar o planejamento; os respectivos módulos não foram implementados.
+
+## 8. Auditoria
+
+São auditadas criações, alterações, mudanças de status, mudanças de papel e exclusões de instituições, contas, cartões, categorias, subcategorias e vínculos de usuários. Cada evento registra empresa, autor, e-mail, entidade, identificador, dados anteriores, dados novos e data/hora. Usuários não podem inserir, editar ou apagar diretamente a trilha.
+
+## 9. Evidências de testes
+
+| Suíte | Total | Aprovados | Reprovados |
+|---|---:|---:|---:|
+| Unitários | 30 | 30 | 0 |
+| Segurança RLS/RBAC/storage/auditoria | 61 | 61 | 0 |
+| E2E crítico de autenticação | 1 | 1 | 0 |
+| **Total** | **92** | **92** | **0** |
+
+### Cenário E2E aprovado
+
+`sessão válida → contexto empresarial → empresa ativa → permissões RBAC → Dashboard → recarga → logout → login`
+
+### Testes negativos cobertos
+
+- visitante anônimo sem leitura/escrita empresarial ou acesso ao storage;
+- usuário da Empresa A sem leitura ou escrita na Empresa B;
+- papéis Consulta e Auditor sem mutações financeiras;
+- Financeiro sem gestão da empresa, membros ou auditoria;
+- referências cruzadas entre empresas rejeitadas;
+- escrita/alteração/exclusão direta da auditoria rejeitada;
+- remoção, rebaixamento ou inativação do último administrador rejeitada.
+
+### Qualidade estática
+
+- Typecheck: aprovado.
+- Lint: aprovado, sem erros; permanecem 9 avisos não bloqueantes de Fast Refresh/hooks em componentes existentes.
+
+## 10. Saneamento do `.env`
+
+- O arquivo `.env` foi removido do estado atual versionável e permanece coberto pelo `.gitignore`.
+- A inspeção do histórico encontrou somente URL, ID e chave publicável da infraestrutura; não foi encontrada chave privilegiada ou senha de banco.
+- A exclusão será consolidada no próximo commit gerenciado pela plataforma. Reescrever o histórico remoto não foi necessário, pois os valores encontrados são publicáveis por projeto.
+
+## 11. Riscos residuais
+
+1. A sessão é observada no layout autenticado, no contexto empresarial e no listener raiz. O fluxo foi validado, mas uma futura refatoração pode centralizar a observação para reduzir invalidações redundantes.
+2. O seletor de empresa usa preferência persistida no navegador; quando um vínculo é removido em outra aba, o fallback é seguro, mas o valor antigo só é substituído na próxima seleção.
+3. O E2E depende de uma sessão autorizada gerada pelo ambiente de testes; sem ela, encerra com código de `SKIP` e não deve ser interpretado como aprovação.
+4. Os avisos de Fast Refresh são dívida de organização de componentes, sem impacto no build ou na segurança.
+
+## 12. Dívida técnica
+
+- Extrair o fluxo comum de logout para uma única função reutilizável.
+- Centralizar o estado de autenticação em uma única origem sem alterar o gate gerenciado.
+- Reagir ao evento `storage` para sincronizar seleção de empresa entre abas.
+- Separar constantes exportadas de componentes que geram avisos de Fast Refresh.
+- Ampliar E2E para os CRUDs da Fase 1 e cenários de vínculo inativo/empresa inativa.
+
+## 13. Pendências e bloqueio de escopo
+
+- Homologação funcional expressa pelo responsável do produto.
+- Fases 2+ permanecem bloqueadas.
+- Não foram implementados importação, OCR, OFX, leitura inteligente, conciliação, faturas, inteligência financeira ou automações.
+
+## 14. Conclusão
+
+O incidente P0 de login está corrigido e validado no fluxo real. As garantias de isolamento multiempresa, RLS, RBAC, auditoria, storage privado e cadastros das Fases 0 e 1 permanecem aprovadas. O desenvolvimento deve permanecer interrompido até homologação expressa e autorização para a próxima fase.
