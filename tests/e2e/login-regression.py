@@ -42,6 +42,7 @@ async def main() -> None:
 
         await page.get_by_role("button", name="Sair", exact=True).click()
         await page.wait_for_url(f"{BASE_URL}/auth", timeout=15_000)
+        await page.get_by_role("heading", name="Entrar na sua conta").wait_for(timeout=15_000)
         assert await page.get_by_role("heading", name="Entrar na sua conta").is_visible()
         await browser.close()
     print("PASS: sessão -> contexto -> empresa -> RBAC -> Dashboard -> reload -> logout")
