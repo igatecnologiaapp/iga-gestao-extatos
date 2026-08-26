@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
-    "test:security": "bun tests/security/api-security-tests.mjs"
+    "test:security": "bun tests/security/api-security-tests.mjs",
+    "test:e2e:login": "python3 tests/e2e/login-regression.py"
   },
   "overrides": {
     "rolldown": "1.2.1"
