@@ -20,7 +20,6 @@ export type Membership = {
 type CompanyContextValue = {
   user: User | null;
   memberships: Membership[];
-  hasOnlyInactiveMemberships: boolean;
   company: Company | null;
   role: AppRole | null;
   permissions: Set<string>;
@@ -96,9 +95,6 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     () => allMemberships.filter((m) => m.status === "ativo"),
     [allMemberships],
   );
-  const hasOnlyInactiveMemberships =
-    membershipsQuery.isSuccess && allMemberships.length > 0 && memberships.length === 0;
-
   const company = useMemo(() => {
     if (memberships.length === 0) return null;
     const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
@@ -145,7 +141,6 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const value: CompanyContextValue = {
     user,
     memberships,
-    hasOnlyInactiveMemberships,
     company,
     role,
     permissions,
