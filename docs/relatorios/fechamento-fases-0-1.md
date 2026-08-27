@@ -7,18 +7,20 @@
 
 ## 1. Parecer executivo
 
-O incidente P0 foi reproduzido, diagnosticado e corrigido. A regressão autenticada executada com o usuário operacional percorreu sessão válida, contexto empresarial, RBAC, Dashboard, recarga da página e logout sem erro de JavaScript ou tela de falha.
+O incidente P0 foi reproduzido novamente no ambiente publicado e a causa de implantação foi corrigida. A regressão autenticada deve ser repetida no bundle publicado após esta correção antes da homologação final.
 
 As Fases 0 e 1 estão **tecnicamente homologáveis**, com 30 testes unitários, 61 testes de segurança e 1 cenário E2E crítico aprovados. A homologação de negócio permanece dependente da aprovação expressa do responsável pelo produto. Nenhum item das Fases 2 ou posteriores foi implementado.
 
 ## 2. Causa raiz do incidente P0
 
-O erro era produzido pela combinação de dois fatores:
+A investigação inicial corrigiu dois riscos reais do fluxo autenticado:
 
 1. o estado do contexto empresarial era tratado por verificações parcialmente duplicadas e sem uma máquina de estados explícita, permitindo que carregamento, ausência de vínculo, vínculo inativo e erro de consulta fossem apresentados de forma ambígua;
 2. as telas públicas de autenticação participavam de renderização no servidor, embora dependessem da sessão armazenada no navegador, criando risco de divergência de hidratação durante o redirecionamento pós-login.
 
-A investigação também encontrou diferença entre dados de teste locais e o ambiente ativo. No backend ativo, o usuário operacional possui perfil e um vínculo empresarial ativo; essa condição foi confirmada antes do E2E final.
+A reprodução posterior no bundle publicado revelou a causa raiz ainda ativa: as variáveis públicas de conexão do backend (`VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`) não estavam incorporadas ao JavaScript entregue ao navegador. O cliente de autenticação lançava uma exceção no listener da rota raiz antes de o layout autenticado, o `CompanyProvider` ou o `RequireCompany` serem executados. Por isso, a aplicação exibia o componente genérico “Esta página não carregou”.
+
+O funcionamento local mascarava a falha porque o arquivo `.env` não versionado fornecia as variáveis durante o desenvolvimento. A correção passou a mapear, no build, somente a URL e a chave publicável fornecidas pelo ambiente da plataforma, sem depender de `.env` versionado e sem expor credenciais privilegiadas.
 
 ## 3. Correções aplicadas
 
@@ -30,6 +32,7 @@ A investigação também encontrou diferença entre dados de teste locais e o am
 - Após login por e-mail e senha, adicionada validação explícita da identidade antes de navegar.
 - Padronizado o logout com cancelamento de consultas, limpeza do cache protegido, encerramento da sessão e navegação com substituição de histórico.
 - Adicionada regressão E2E executável por `bun run test:e2e:login`.
+- Adicionada ponte explícita no Vite entre as variáveis públicas fornecidas pelo ambiente de implantação e `import.meta.env`, eliminando a dependência do arquivo `.env` local no bundle do navegador.
 
 ## 4. Arquitetura
 
@@ -193,4 +196,4 @@ São auditadas criações, alterações, mudanças de status, mudanças de papel
 
 ## 14. Conclusão
 
-O incidente P0 de login está corrigido e validado no fluxo real. As garantias de isolamento multiempresa, RLS, RBAC, auditoria, storage privado e cadastros das Fases 0 e 1 permanecem aprovadas. O desenvolvimento deve permanecer interrompido até homologação expressa e autorização para a próxima fase.
+O diagnóstico do incidente P0 foi revisado após reprodução no ambiente publicado, e a falha de configuração do bundle foi corrigida. As garantias de isolamento multiempresa, RLS, RBAC, auditoria, storage privado e cadastros das Fases 0 e 1 permanecem aprovadas. A homologação final do login depende da validação do novo bundle publicado. O desenvolvimento deve permanecer interrompido até homologação expressa e autorização para a próxima fase.
