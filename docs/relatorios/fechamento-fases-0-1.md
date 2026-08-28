@@ -197,3 +197,7 @@ São auditadas criações, alterações, mudanças de status, mudanças de papel
 ## 14. Conclusão
 
 O diagnóstico do incidente P0 foi revisado após reprodução no ambiente publicado, e a falha de configuração do bundle foi corrigida. As garantias de isolamento multiempresa, RLS, RBAC, auditoria, storage privado e cadastros das Fases 0 e 1 permanecem aprovadas. A homologação final do login depende da validação do novo bundle publicado. O desenvolvimento deve permanecer interrompido até homologação expressa e autorização para a próxima fase.
+
+### Retificação técnica da injeção de ambiente
+
+A tentativa anterior de criar uma ponte manual em `vite.config.ts` foi removida. A configuração era avaliada antes da injeção gerenciada do ambiente e definia `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` como strings vazias quando os valores ainda não estavam disponíveis, sobrescrevendo a injeção nativa do Lovable Cloud no bundle do navegador. O projeto voltou a usar exclusivamente a injeção oficial fornecida por `@lovable.dev/vite-tanstack-config`, sem depender de `.env` versionado e sem alterar o cliente de autenticação gerado.
