@@ -201,3 +201,49 @@ O diagnóstico do incidente P0 foi revisado após reprodução no ambiente publi
 ### Retificação técnica da injeção de ambiente
 
 A tentativa anterior de criar uma ponte manual em `vite.config.ts` foi removida. A configuração era avaliada antes da injeção gerenciada do ambiente e definia `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` como strings vazias quando os valores ainda não estavam disponíveis, sobrescrevendo a injeção nativa do Lovable Cloud no bundle do navegador. O projeto voltou a usar exclusivamente a injeção oficial fornecida por `@lovable.dev/vite-tanstack-config`, sem depender de `.env` versionado e sem alterar o cliente de autenticação gerado.
+## INCIDENTE P0 — BOOT/BUILD/SSR — DIAGNÓSTICO FINAL
+
+**Sintoma:** no ambiente publicado, qualquer rota exibia “Esta página não carregou” (fallback global de `src/lib/error-page.ts`), enquanto o ambiente de desenvolvimento funcionava.
+
+**Primeira exceção causal:** `Error: Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY. Connect Supabase in Lovable Cloud.`
+Lançada em `createSupabaseClient()` (`src/integrations/supabase/client.ts:44`), no primeiro acesso ao proxy `supabase` — antes do layout autenticado, do `CompanyProvider` e do `RequireCompany`. Lado cliente (bundle do navegador), fase de inicialização do módulo/render inicial; o wrapper de erro converteu a exceção na página amigável.
+
+**Evidência objetiva (bundle publicado `/assets/index-C_jEselP.js`):**
+`... VITE_SUPABASE_PUBLISHABLE_KEY:``, VITE_SUPABASE_URL:`` ...` — ou seja, as duas variáveis foram compiladas como **strings vazias**, que são falsy e disparam a exceção.
+
+**Causa raiz:** o bloco manual `vite.define` reintroduzido em `vite.config.ts` lia `process.env` no momento de avaliação do arquivo de configuração — anterior à injeção gerenciada do ambiente no build publicado — e gravava `""` (`?? ""`), sobrescrevendo a injeção oficial de `@lovable.dev/vite-tanstack-config`.
+
+**Por que as tentativas anteriores não resolveram:** alternaram entre remover e reintroduzir o mesmo mecanismo, sem inspecionar o artefato realmente entregue ao navegador; o sandbox de desenvolvimento tem as variáveis no processo e mascarava a falha.
+
+**Relação cbe364fd × 7ab0bf1b:** `cbe364fd` removeu a ponte manual pelo motivo correto (avaliação precoce → strings vazias). `7ab0bf1b` reintroduziu lógica equivalente (`process.env[...] ?? ""` + `define`), reativando exatamente a condição já diagnosticada. A causa registrada em `cbe364fd` permanece tecnicamente válida.
+
+**Configuração anterior:** `vite.config.ts` definia `import.meta.env.VITE_SUPABASE_URL` e `import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY` via `define`.
+**Configuração final:** nenhum `define` de variáveis; injeção exclusivamente oficial por `@lovable.dev/vite-tanstack-config`. Sem `.env` versionado, sem valores no código, sem `service_role`.
+
+**Arquivos alterados:** `vite.config.ts`; `docs/relatorios/fechamento-fases-0-1.md`.
+
+**Variáveis (sem valores):** `VITE_SUPABASE_URL` DEFINIDA · `VITE_SUPABASE_PUBLISHABLE_KEY` DEFINIDA (mascarada) · `SUPABASE_URL` DEFINIDA · `SUPABASE_PUBLISHABLE_KEY` DEFINIDA (mascarada). Disponíveis no build: SIM. Disponíveis no SSR: SIM. Incorporadas ao bundle do cliente: SIM (somente URL, chave publicável, anon e project id). Nenhuma chave privilegiada no bundle (`sb_secret_` aparece apenas como prefixo de verificação; `service_role`: 0 ocorrências).
+
+**Resultado do build:** aprovado; bundle novo contém `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` com valores reais (sem `""`, `undefined` ou placeholder).
+**GET /:** HTTP 200, redirecionamento controlado para `/auth`, sem fallback e sem 500.
+**GET /auth:** HTTP 200, formulário de login renderizado; recarga direta e janela sem sessão idem.
+**E2E autenticado:** PASS (`sessão → contexto → empresa → RBAC → Dashboard → reload → logout`).
+
+| Suíte | Executados | PASS | FAIL | SKIP |
+|---|---:|---:|---:|---:|
+| Build | 1 | 1 | 0 | 0 |
+| Typecheck | 1 | 1 | 0 | 0 |
+| Lint | 1 | 1 | 0 | 0 |
+| Unitários | 30 | 30 | 0 | 0 |
+| Segurança | 61 | 61 | 0 | 0 |
+| Smoke `/` e `/auth` | 2 | 2 | 0 | 0 |
+| E2E autenticado | 1 | 1 | 0 | 0 |
+| **Total** | **97** | **97** | **0** | **0** |
+
+**Riscos residuais:**
+1. O endereço publicado continuará servindo o bundle antigo até que esta atualização seja publicada.
+2. `vite preview` não executa a saída Nitro/worker (`dist/server/index.mjs`) e falha localmente por limitação da ferramenta, não da aplicação.
+3. Aviso de hidratação em `/auth` (rota com SSR desligado) — não bloqueante, sem relação com o incidente.
+4. Lint mantém 9 avisos não bloqueantes de Fast Refresh.
+
+**Status:** INCIDENTE P0 CORRIGIDO — AGUARDANDO VALIDAÇÃO EXTERNA DO AMBIENTE PUBLICADO.
