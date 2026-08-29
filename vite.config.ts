@@ -4,22 +4,14 @@
 //     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+//
+// IMPORTANTE (incidente P0): não redefinir aqui `import.meta.env.VITE_SUPABASE_*`.
+// A avaliação deste arquivo ocorre antes da injeção gerenciada do ambiente no build
+// publicado, gravando strings vazias no bundle e quebrando o cliente do backend.
+// A injeção oficial é feita por @lovable.dev/vite-tanstack-config.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// The generated browser client reads these values through computed
-// `import.meta.env[...]` access. Explicit definitions keep production builds
-// independent from a local .env file while exposing public values only.
-const publicBackendUrl = process.env["VITE_SUPABASE_URL"] ?? process.env["SUPABASE_URL"];
-const publicBackendKey =
-  process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
-
 export default defineConfig({
-  vite: {
-    define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(publicBackendUrl ?? ""),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(publicBackendKey ?? ""),
-    },
-  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
