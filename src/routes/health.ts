@@ -22,6 +22,10 @@ export const Route = createFileRoute("/health")({
             status: "ok",
             commit,
             build,
+            backendRuntime: {
+              urlConfigured: Boolean(process.env["SUPABASE_URL"]),
+              publishableKeyConfigured: Boolean(process.env["SUPABASE_PUBLISHABLE_KEY"]),
+            },
           },
           {
             status: 200,
