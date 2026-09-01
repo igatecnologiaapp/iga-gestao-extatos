@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_NAME } from "@/lib/domain";
+import { getPublicBackendConfig } from "@/lib/public-backend-config.functions";
 
 function NotFoundComponent() {
   return (
@@ -75,6 +76,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: () => getPublicBackendConfig(),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -112,12 +114,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const backendConfig = Route.useLoaderData();
+  const serializedBackendConfig = JSON.stringify(backendConfig ?? {}).replaceAll("<", "\\u003c");
   return (
     <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__IGA_BACKEND_CONFIG__=${serializedBackendConfig}`,
+          }}
+        />
         {children}
         <Scripts />
       </body>

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { AppShell, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import { APP_NAME, PERMISSION_LABELS, ROLE_LABELS, type Company } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

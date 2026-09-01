@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import type { AppRole, Company } from "@/lib/domain";
 import {
   resolveCompanyContextStatus,

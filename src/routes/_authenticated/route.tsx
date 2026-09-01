@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import { CompanyProvider } from "@/lib/company-context";
 
 // Layout de rotas protegidas (gerenciado pela integração):

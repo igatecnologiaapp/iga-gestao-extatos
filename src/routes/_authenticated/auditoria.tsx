@@ -5,7 +5,7 @@ import { Loader2, ScrollText } from "lucide-react";
 
 import { AccessDenied, AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import {
   APP_NAME,
   AUDIT_ACTION_LABELS,

@@ -25,7 +25,7 @@ import {
 
 import { useCompany } from "@/lib/company-context";
 import { APP_NAME, ROLE_LABELS, type AppRole, type Company } from "@/lib/domain";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import { cn } from "@/lib/utils";
 import {
   Select,
