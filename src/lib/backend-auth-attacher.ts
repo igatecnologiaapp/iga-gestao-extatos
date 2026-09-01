@@ -4,6 +4,7 @@ import { supabase } from "@/lib/backend-client";
 
 export const attachBackendAuth = createMiddleware({ type: "function" }).client(
   async ({ next }) => {
+    if (typeof window === "undefined") return next();
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     return next({
