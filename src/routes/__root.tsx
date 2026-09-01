@@ -115,6 +115,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   const backendConfig = Route.useLoaderData();
+  const serializedBackendConfig = JSON.stringify(backendConfig ?? {}).replaceAll("<", "\\u003c");
   return (
     <html lang="pt-BR">
       <head>
@@ -123,7 +124,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.__IGA_BACKEND_CONFIG__=${JSON.stringify(backendConfig).replaceAll("<", "\\u003c")}`,
+            __html: `window.__IGA_BACKEND_CONFIG__=${serializedBackendConfig}`,
           }}
         />
         {children}
