@@ -12,7 +12,7 @@ import {
 
 import { AppShell, RequireCompany } from "@/components/app-shell";
 import { useCompany } from "@/lib/company-context";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import { APP_NAME, AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, type Company } from "@/lib/domain";
 import { formatDateTime } from "@/lib/format";
 

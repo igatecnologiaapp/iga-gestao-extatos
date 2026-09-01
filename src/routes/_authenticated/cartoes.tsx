@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { AppShell, EmptyState, RequireCompany } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { useCompany } from "@/lib/company-context";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import {
   APP_NAME,
   CARD_BRANDS,

@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCompany } from "@/lib/company-context";
 import { inviteMember } from "@/lib/members.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/backend-client";
 import {
   APP_NAME,
   RECORD_STATUS_LABELS,
