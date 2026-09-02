@@ -123,6 +123,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `window.__IGA_BACKEND_CONFIG__=${serializedBackendConfig}`,
           }}
