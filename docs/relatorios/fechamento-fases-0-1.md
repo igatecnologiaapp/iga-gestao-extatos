@@ -7,7 +7,7 @@
 
 ## 1. Parecer executivo
 
-O incidente P0 foi reproduzido novamente no ambiente publicado e a causa de implantação foi corrigida. A regressão autenticada deve ser repetida no bundle publicado após esta correção antes da homologação final.
+O incidente P0 foi reproduzido e recuperado no ambiente publicado. Em 02/09/2026, o Chrome público confirmou `/health` e `/auth` com HTTP 200, rota protegida, contexto empresarial/RBAC, Dashboard, recarga e logout sem fallback ou erro de console. O relogin por senha permanece como validação manual porque o runner não recebeu credenciais de teste; a sessão autenticada gerenciada foi usada sem exposição de tokens.
 
 As Fases 0 e 1 estão **tecnicamente homologáveis**, com 30 testes unitários, 61 testes de segurança e 1 cenário E2E crítico aprovados. A homologação de negócio permanece dependente da aprovação expressa do responsável pelo produto. Nenhum item das Fases 2 ou posteriores foi implementado.
 
@@ -18,9 +18,9 @@ A investigação inicial corrigiu dois riscos reais do fluxo autenticado:
 1. o estado do contexto empresarial era tratado por verificações parcialmente duplicadas e sem uma máquina de estados explícita, permitindo que carregamento, ausência de vínculo, vínculo inativo e erro de consulta fossem apresentados de forma ambígua;
 2. as telas públicas de autenticação participavam de renderização no servidor, embora dependessem da sessão armazenada no navegador, criando risco de divergência de hidratação durante o redirecionamento pós-login.
 
-A reprodução posterior no bundle publicado revelou a causa raiz ainda ativa: as variáveis públicas de conexão do backend (`VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`) não estavam incorporadas ao JavaScript entregue ao navegador. O cliente de autenticação lançava uma exceção no listener da rota raiz antes de o layout autenticado, o `CompanyProvider` ou o `RequireCompany` serem executados. Por isso, a aplicação exibia o componente genérico “Esta página não carregou”.
+A reprodução posterior no bundle publicado revelou a causa raiz ainda ativa: o runtime hospedado possuía `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`, mas o bundle do navegador não recebia as variantes `VITE_*`. O cliente de autenticação lançava uma exceção no listener da rota raiz antes de o layout autenticado, do `CompanyProvider` ou do `RequireCompany`. Por isso, a aplicação exibia o componente genérico “Esta página não carregou”.
 
-O funcionamento local mascarava a falha porque o arquivo `.env` não versionado fornecia as variáveis durante o desenvolvimento. A correção passou a mapear, no build, somente a URL e a chave publicável fornecidas pelo ambiente da plataforma, sem depender de `.env` versionado e sem expor credenciais privilegiadas.
+O funcionamento local mascarava a falha porque o ambiente de desenvolvimento fornecia as variantes `VITE_*`. A correção definitiva não mapeia valores em `vite.config.ts`: uma função de servidor lê URL e chave publicável no runtime, o shell injeta essa configuração no documento antes da hidratação e o cliente da aplicação é inicializado sob demanda. Nenhuma credencial privilegiada é enviada ao navegador.
 
 ## 3. Correções aplicadas
 
@@ -32,7 +32,7 @@ O funcionamento local mascarava a falha porque o arquivo `.env` não versionado 
 - Após login por e-mail e senha, adicionada validação explícita da identidade antes de navegar.
 - Padronizado o logout com cancelamento de consultas, limpeza do cache protegido, encerramento da sessão e navegação com substituição de histórico.
 - Adicionada regressão E2E executável por `bun run test:e2e:login`.
-- Adicionada ponte explícita no Vite entre as variáveis públicas fornecidas pelo ambiente de implantação e `import.meta.env`, eliminando a dependência do arquivo `.env` local no bundle do navegador.
+- Adicionado bootstrap de configuração pública em runtime, independente de `vite.define` e de `.env` versionado.
 
 ## 4. Arquitetura
 
@@ -196,54 +196,52 @@ São auditadas criações, alterações, mudanças de status, mudanças de papel
 
 ## 14. Conclusão
 
-O diagnóstico do incidente P0 foi revisado após reprodução no ambiente publicado, e a falha de configuração do bundle foi corrigida. As garantias de isolamento multiempresa, RLS, RBAC, auditoria, storage privado e cadastros das Fases 0 e 1 permanecem aprovadas. A homologação final do login depende da validação do novo bundle publicado. O desenvolvimento deve permanecer interrompido até homologação expressa e autorização para a próxima fase.
+O diagnóstico do incidente P0 foi revisado após reprodução no ambiente publicado, e o caminho de inicialização foi recuperado sem alterar banco, RLS, RBAC ou regras de negócio. As garantias das Fases 0 e 1 permanecem preservadas. O desenvolvimento deve permanecer interrompido até homologação expressa e autorização para a próxima fase.
 
 ### Retificação técnica da injeção de ambiente
 
 A tentativa anterior de criar uma ponte manual em `vite.config.ts` foi removida. A configuração era avaliada antes da injeção gerenciada do ambiente e definia `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` como strings vazias quando os valores ainda não estavam disponíveis, sobrescrevendo a injeção nativa do Lovable Cloud no bundle do navegador. O projeto voltou a usar exclusivamente a injeção oficial fornecida por `@lovable.dev/vite-tanstack-config`, sem depender de `.env` versionado e sem alterar o cliente de autenticação gerado.
-## INCIDENTE P0 — BOOT/BUILD/SSR — DIAGNÓSTICO FINAL
+## INCIDENTE P0 — RECUPERAÇÃO POR CAMADAS (02/09/2026)
 
-**Sintoma:** no ambiente publicado, qualquer rota exibia “Esta página não carregou” (fallback global de `src/lib/error-page.ts`), enquanto o ambiente de desenvolvimento funcionava.
+### Checkpoint e primeira exceção
 
-**Primeira exceção causal:** `Error: Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY. Connect Supabase in Lovable Cloud.`
-Lançada em `createSupabaseClient()` (`src/integrations/supabase/client.ts:44`), no primeiro acesso ao proxy `supabase` — antes do layout autenticado, do `CompanyProvider` e do `RequireCompany`. Lado cliente (bundle do navegador), fase de inicialização do módulo/render inicial; o wrapper de erro converteu a exceção na página amigável.
+- SHA inicial: `49b6b965ea6f1b1b04ede791df2ab1e2f6187a4b`.
+- Primeira exceção do deployment: `Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY` no cliente do navegador.
+- `/health` provou simultaneamente que `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` estavam configuradas no runtime hospedado. Portanto, a falha era a passagem runtime → cliente, não ausência da configuração no servidor.
 
-**Evidência objetiva (bundle publicado `/assets/index-C_jEselP.js`):**
-`... VITE_SUPABASE_PUBLISHABLE_KEY:``, VITE_SUPABASE_URL:`` ...` — ou seja, as duas variáveis foram compiladas como **strings vazias**, que são falsy e disparam a exceção.
+### Testes de isolamento
 
-**Causa raiz:** o bloco manual `vite.define` reintroduzido em `vite.config.ts` lia `process.env` no momento de avaliação do arquivo de configuração — anterior à injeção gerenciada do ambiente no build publicado — e gravava `""` (`?? ""`), sobrescrevendo a injeção oficial de `@lovable.dev/vite-tanstack-config`.
+1. **Página mínima `/auth`: PASS público.** Sem cliente do backend, contexto, RBAC ou listener global: HTTP 200 e renderização no Chrome, sem fallback.
+2. **Server entry customizado: inocentado.** A página mínima e o fluxo final funcionaram publicamente mantendo `server: { entry: "server" }` e `src/server.ts`; não houve correlação entre o wrapper e a indisponibilidade.
+3. **`src/start.ts`: inocentado com ajuste de cliente.** O middleware CSRF e o middleware global de erro permaneceram. O attacher passou a usar o cliente configurado em runtime e ganhou guard explícito para não acessar APIs do navegador durante SSR.
+4. **Componente causal:** listener global de autenticação na rota raiz inicializava o cliente gerado em todas as páginas públicas. Ele foi removido. O `CompanyProvider` mantém a observação necessária apenas dentro das rotas protegidas.
 
-**Por que as tentativas anteriores não resolveram:** alternaram entre remover e reintroduzir o mesmo mecanismo, sem inspecionar o artefato realmente entregue ao navegador; o sandbox de desenvolvimento tem as variáveis no processo e mascarava a falha.
+### Arquitetura final de inicialização
 
-**Relação cbe364fd × 7ab0bf1b:** `cbe364fd` removeu a ponte manual pelo motivo correto (avaliação precoce → strings vazias). `7ab0bf1b` reintroduziu lógica equivalente (`process.env[...] ?? ""` + `define`), reativando exatamente a condição já diagnosticada. A causa registrada em `cbe364fd` permanece tecnicamente válida.
+`Browser → loader raiz → função de servidor lê configuração pública → script configura window antes da hidratação → cliente lazy → Auth → rota protegida → CompanyProvider → RBAC → Dashboard`.
 
-**Configuração anterior:** `vite.config.ts` definia `import.meta.env.VITE_SUPABASE_URL` e `import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY` via `define`.
-**Configuração final:** nenhum `define` de variáveis; injeção exclusivamente oficial por `@lovable.dev/vite-tanstack-config`. Sem `.env` versionado, sem valores no código, sem `service_role`.
+Arquivos criados: `src/routes/health.ts`, `src/lib/public-backend-config.functions.ts`, `src/lib/backend-client.ts`, `src/lib/backend-auth-attacher.ts`.
 
-**Arquivos alterados:** `vite.config.ts`; `docs/relatorios/fechamento-fases-0-1.md`.
+Arquivos alterados: `src/routes/__root.tsx`, `src/start.ts`, `src/routes/auth.tsx`, imports de cliente nas rotas protegidas, `src/lib/company-context.tsx`, `src/components/app-shell.tsx` e este relatório. `vite.config.ts`, banco, RLS e RBAC não foram alterados.
 
-**Variáveis (sem valores):** `VITE_SUPABASE_URL` DEFINIDA · `VITE_SUPABASE_PUBLISHABLE_KEY` DEFINIDA (mascarada) · `SUPABASE_URL` DEFINIDA · `SUPABASE_PUBLISHABLE_KEY` DEFINIDA (mascarada). Disponíveis no build: SIM. Disponíveis no SSR: SIM. Incorporadas ao bundle do cliente: SIM (somente URL, chave publicável, anon e project id). Nenhuma chave privilegiada no bundle (`sb_secret_` aparece apenas como prefixo de verificação; `service_role`: 0 ocorrências).
+### Evidências no endereço público
 
-**Resultado do build:** aprovado; bundle novo contém `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` com valores reais (sem `""`, `undefined` ou placeholder).
-**GET /:** HTTP 200, redirecionamento controlado para `/auth`, sem fallback e sem 500.
-**GET /auth:** HTTP 200, formulário de login renderizado; recarga direta e janela sem sessão idem.
-**E2E autenticado:** PASS (`sessão → contexto → empresa → RBAC → Dashboard → reload → logout`).
+URL: `https://iga-gestao-extatos.lovable.app/`
 
-| Suíte | Executados | PASS | FAIL | SKIP |
-|---|---:|---:|---:|---:|
-| Build | 1 | 1 | 0 | 0 |
-| Typecheck | 1 | 1 | 0 | 0 |
-| Lint | 1 | 1 | 0 | 0 |
-| Unitários | 30 | 30 | 0 | 0 |
-| Segurança | 61 | 61 | 0 | 0 |
-| Smoke `/` e `/auth` | 2 | 2 | 0 | 0 |
-| E2E autenticado | 1 | 1 | 0 | 0 |
-| **Total** | **97** | **97** | **0** | **0** |
+| Critério | Resultado |
+|---|---|
+| `/health` | PASS — HTTP 200, `status: ok`, checkpoint e identificador de deployment, sem cache |
+| `/auth` | PASS — HTTP 200, formulário visível no Chrome |
+| `/` sem sessão | PASS — encaminha para `/auth`; React registra aviso de hidratação não bloqueante durante o redirecionamento |
+| Janela anônima | PASS — login visível, sem fallback e sem erros |
+| Sessão válida | PASS — rota protegida abriu |
+| Company Context e RBAC | PASS — Dashboard renderizado |
+| Recarga/Ctrl+F5 equivalente | PASS — Dashboard permaneceu renderizado após reload de rede |
+| Logout | PASS — sessão encerrada e retorno para `/auth` |
+| Novo login por senha | PENDENTE MANUAL — runner sem credenciais de teste; não foi declarado PASS |
 
-**Riscos residuais:**
-1. O endereço publicado continuará servindo o bundle antigo até que esta atualização seja publicada.
-2. `vite preview` não executa a saída Nitro/worker (`dist/server/index.mjs`) e falha localmente por limitação da ferramenta, não da aplicação.
-3. Aviso de hidratação em `/auth` (rota com SSR desligado) — não bloqueante, sem relação com o incidente.
-4. Lint mantém 9 avisos não bloqueantes de Fast Refresh.
+O deployment validado expôs `x-deployment-id` próprio e `/health` com checkpoint `49b6b965ea6f1b1b04ede791df2ab1e2f6187a4b`, eliminando a dúvida de cache/deployment antigo. O build observado após as alterações permaneceu `build OK`.
 
-**Status:** INCIDENTE P0 CORRIGIDO — AGUARDANDO VALIDAÇÃO EXTERNA DO AMBIENTE PUBLICADO.
+Risco residual: o acesso inicial por `/` sem sessão registra o aviso React #418 durante o redirecionamento client-only para `/auth`. A tela de login é exibida, não há fallback nem indisponibilidade; acesso direto a `/auth`, Dashboard e recarga autenticada não registraram o aviso. Duas correções isoladas (supressão no script de bootstrap e SSR da rota de login) não o eliminaram e foram revertidas para evitar novas alterações por hipótese.
+
+**Status:** APLICAÇÃO RECUPERADA NO CHROME PÚBLICO. INCIDENTE P0 tecnicamente contido; homologação final das Fases 0 e 1 e relogin por senha dependem da validação manual do responsável. Fase 2 permanece bloqueada.
