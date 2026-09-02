@@ -232,7 +232,7 @@ URL: `https://iga-gestao-extatos.lovable.app/`
 |---|---|
 | `/health` | PASS — HTTP 200, `status: ok`, checkpoint e identificador de deployment, sem cache |
 | `/auth` | PASS — HTTP 200, formulário visível no Chrome |
-| `/` sem sessão | PASS — encaminha para `/auth` |
+| `/` sem sessão | PASS — encaminha para `/auth`; React registra aviso de hidratação não bloqueante durante o redirecionamento |
 | Janela anônima | PASS — login visível, sem fallback e sem erros |
 | Sessão válida | PASS — rota protegida abriu |
 | Company Context e RBAC | PASS — Dashboard renderizado |
@@ -241,5 +241,7 @@ URL: `https://iga-gestao-extatos.lovable.app/`
 | Novo login por senha | PENDENTE MANUAL — runner sem credenciais de teste; não foi declarado PASS |
 
 O deployment validado expôs `x-deployment-id` próprio e `/health` com checkpoint `49b6b965ea6f1b1b04ede791df2ab1e2f6187a4b`, eliminando a dúvida de cache/deployment antigo. O build observado após as alterações permaneceu `build OK`.
+
+Risco residual: o acesso inicial por `/` sem sessão registra o aviso React #418 durante o redirecionamento client-only para `/auth`. A tela de login é exibida, não há fallback nem indisponibilidade; acesso direto a `/auth`, Dashboard e recarga autenticada não registraram o aviso. Duas correções isoladas (supressão no script de bootstrap e SSR da rota de login) não o eliminaram e foram revertidas para evitar novas alterações por hipótese.
 
 **Status:** APLICAÇÃO RECUPERADA NO CHROME PÚBLICO. INCIDENTE P0 tecnicamente contido; homologação final das Fases 0 e 1 e relogin por senha dependem da validação manual do responsável. Fase 2 permanece bloqueada.
