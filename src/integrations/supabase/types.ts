@@ -280,6 +280,117 @@ export type Database = {
           },
         ]
       }
+      import_batches: {
+        Row: {
+          account_id: string | null
+          card_id: string | null
+          company_id: string
+          confirmed_count: number
+          created_at: string
+          created_by: string | null
+          duplicate_of: string | null
+          error_message: string | null
+          file_format: Database["public"]["Enums"]["import_file_format"]
+          file_hash: string
+          file_name: string
+          file_size: number
+          id: string
+          institution_id: string | null
+          parsed_count: number
+          period_end: string | null
+          period_start: string | null
+          processed_at: string | null
+          source_type: Database["public"]["Enums"]["import_source_type"]
+          status: Database["public"]["Enums"]["import_status"]
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          card_id?: string | null
+          company_id: string
+          confirmed_count?: number
+          created_at?: string
+          created_by?: string | null
+          duplicate_of?: string | null
+          error_message?: string | null
+          file_format: Database["public"]["Enums"]["import_file_format"]
+          file_hash: string
+          file_name: string
+          file_size?: number
+          id?: string
+          institution_id?: string | null
+          parsed_count?: number
+          period_end?: string | null
+          period_start?: string | null
+          processed_at?: string | null
+          source_type: Database["public"]["Enums"]["import_source_type"]
+          status?: Database["public"]["Enums"]["import_status"]
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          card_id?: string | null
+          company_id?: string
+          confirmed_count?: number
+          created_at?: string
+          created_by?: string | null
+          duplicate_of?: string | null
+          error_message?: string | null
+          file_format?: Database["public"]["Enums"]["import_file_format"]
+          file_hash?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          institution_id?: string | null
+          parsed_count?: number
+          period_end?: string | null
+          period_start?: string | null
+          processed_at?: string | null
+          source_type?: Database["public"]["Enums"]["import_source_type"]
+          status?: Database["public"]["Enums"]["import_status"]
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_batches_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_batches_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "financial_institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           description: string
@@ -342,6 +453,108 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "permissions"
             referencedColumns: ["key"]
+          },
+        ]
+      }
+      staged_transactions: {
+        Row: {
+          amount: number | null
+          category_id: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          description: string
+          direction: Database["public"]["Enums"]["transaction_direction"] | null
+          duplicate_reason: string | null
+          duplicate_state: Database["public"]["Enums"]["duplicate_flag"]
+          fingerprint: string | null
+          id: string
+          import_id: string
+          normalized_description: string
+          posted_at: string | null
+          raw: Json | null
+          row_index: number
+          status: Database["public"]["Enums"]["staged_status"]
+          subcategory_id: string | null
+          updated_at: string
+          warnings: string[]
+        }
+        Insert: {
+          amount?: number | null
+          category_id?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          description?: string
+          direction?:
+            | Database["public"]["Enums"]["transaction_direction"]
+            | null
+          duplicate_reason?: string | null
+          duplicate_state?: Database["public"]["Enums"]["duplicate_flag"]
+          fingerprint?: string | null
+          id?: string
+          import_id: string
+          normalized_description?: string
+          posted_at?: string | null
+          raw?: Json | null
+          row_index?: number
+          status?: Database["public"]["Enums"]["staged_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+          warnings?: string[]
+        }
+        Update: {
+          amount?: number | null
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          direction?:
+            | Database["public"]["Enums"]["transaction_direction"]
+            | null
+          duplicate_reason?: string | null
+          duplicate_state?: Database["public"]["Enums"]["duplicate_flag"]
+          fingerprint?: string | null
+          id?: string
+          import_id?: string
+          normalized_description?: string
+          posted_at?: string | null
+          raw?: Json | null
+          row_index?: number
+          status?: Database["public"]["Enums"]["staged_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+          warnings?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staged_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staged_transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staged_transactions_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_subcategories"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -428,6 +641,137 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          card_id: string | null
+          category_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string
+          direction: Database["public"]["Enums"]["transaction_direction"]
+          fingerprint: string | null
+          id: string
+          import_id: string | null
+          institution_id: string | null
+          normalized_description: string
+          notes: string | null
+          origin: Database["public"]["Enums"]["transaction_origin"]
+          posted_at: string
+          source_type: Database["public"]["Enums"]["import_source_type"]
+          staged_id: string | null
+          status: Database["public"]["Enums"]["record_status"]
+          subcategory_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          card_id?: string | null
+          category_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description: string
+          direction: Database["public"]["Enums"]["transaction_direction"]
+          fingerprint?: string | null
+          id?: string
+          import_id?: string | null
+          institution_id?: string | null
+          normalized_description?: string
+          notes?: string | null
+          origin?: Database["public"]["Enums"]["transaction_origin"]
+          posted_at: string
+          source_type: Database["public"]["Enums"]["import_source_type"]
+          staged_id?: string | null
+          status?: Database["public"]["Enums"]["record_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          card_id?: string | null
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string
+          direction?: Database["public"]["Enums"]["transaction_direction"]
+          fingerprint?: string | null
+          id?: string
+          import_id?: string | null
+          institution_id?: string | null
+          normalized_description?: string
+          notes?: string | null
+          origin?: Database["public"]["Enums"]["transaction_origin"]
+          posted_at?: string
+          source_type?: Database["public"]["Enums"]["import_source_type"]
+          staged_id?: string | null
+          status?: Database["public"]["Enums"]["record_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "financial_institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           company_id: string
@@ -483,6 +827,16 @@ export type Database = {
       app_role: "admin" | "financeiro" | "consulta" | "auditor"
       card_status: "ativo" | "bloqueado" | "cancelado" | "inativo"
       card_type: "credito" | "debito" | "credito_debito"
+      duplicate_flag: "nenhuma" | "possivel" | "confirmada" | "ignorada"
+      import_file_format: "pdf" | "ofx" | "csv" | "xlsx"
+      import_source_type: "conta" | "cartao"
+      import_status:
+        | "recebido"
+        | "processando"
+        | "revisao"
+        | "confirmado"
+        | "erro"
+        | "cancelado"
       institution_type:
         | "banco"
         | "cooperativa"
@@ -491,6 +845,9 @@ export type Database = {
         | "instituicao_pagamento"
         | "outra"
       record_status: "ativo" | "inativo"
+      staged_status: "pendente" | "confirmado" | "descartado"
+      transaction_direction: "entrada" | "saida"
+      transaction_origin: "importado" | "manual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -506,12 +863,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -535,11 +892,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -560,11 +917,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -585,11 +942,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -602,11 +959,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -628,6 +985,17 @@ export const Constants = {
       app_role: ["admin", "financeiro", "consulta", "auditor"],
       card_status: ["ativo", "bloqueado", "cancelado", "inativo"],
       card_type: ["credito", "debito", "credito_debito"],
+      duplicate_flag: ["nenhuma", "possivel", "confirmada", "ignorada"],
+      import_file_format: ["pdf", "ofx", "csv", "xlsx"],
+      import_source_type: ["conta", "cartao"],
+      import_status: [
+        "recebido",
+        "processando",
+        "revisao",
+        "confirmado",
+        "erro",
+        "cancelado",
+      ],
       institution_type: [
         "banco",
         "cooperativa",
@@ -637,6 +1005,9 @@ export const Constants = {
         "outra",
       ],
       record_status: ["ativo", "inativo"],
+      staged_status: ["pendente", "confirmado", "descartado"],
+      transaction_direction: ["entrada", "saida"],
+      transaction_origin: ["importado", "manual"],
     },
   },
 } as const
