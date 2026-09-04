@@ -78,6 +78,8 @@ export const AUDIT_ENTITY_LABELS: Record<string, string> = {
   transaction_categories: "Categoria",
   transaction_subcategories: "Subcategoria",
   user_roles: "Usuário/Papel",
+  import_batches: "Importação",
+  transactions: "Lançamento",
 };
 
 export const PERMISSION_LABELS: Record<string, string> = {
@@ -106,3 +108,55 @@ export const PERMISSION_LABELS: Record<string, string> = {
 };
 
 export const CARD_BRANDS = ["Visa", "Mastercard", "Elo", "American Express", "Hipercard", "Outra"];
+
+// ===================== Fase 2 — Importações e Lançamentos =====================
+
+export type ImportSourceType = Database["public"]["Enums"]["import_source_type"];
+export type ImportFileFormatDb = Database["public"]["Enums"]["import_file_format"];
+export type ImportStatus = Database["public"]["Enums"]["import_status"];
+export type TransactionDirection = Database["public"]["Enums"]["transaction_direction"];
+export type TransactionOrigin = Database["public"]["Enums"]["transaction_origin"];
+export type StagedStatus = Database["public"]["Enums"]["staged_status"];
+export type DuplicateFlag = Database["public"]["Enums"]["duplicate_flag"];
+
+export type ImportBatch = Database["public"]["Tables"]["import_batches"]["Row"];
+export type StagedTransaction = Database["public"]["Tables"]["staged_transactions"]["Row"];
+export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
+
+export const IMPORT_SOURCE_LABELS: Record<ImportSourceType, string> = {
+  conta: "Conta bancária",
+  cartao: "Cartão",
+};
+
+export const IMPORT_STATUS_LABELS: Record<ImportStatus, string> = {
+  recebido: "Recebido",
+  processando: "Processando",
+  revisao: "Em revisão",
+  confirmado: "Confirmado",
+  erro: "Erro",
+  cancelado: "Cancelado",
+};
+
+export const IMPORT_FORMAT_LABELS: Record<ImportFileFormatDb, string> = {
+  pdf: "PDF",
+  ofx: "OFX",
+  csv: "CSV",
+  xlsx: "XLS/XLSX",
+};
+
+export const DIRECTION_LABELS: Record<TransactionDirection, string> = {
+  entrada: "Entrada",
+  saida: "Saída",
+};
+
+export const ORIGIN_LABELS: Record<TransactionOrigin, string> = {
+  importado: "Importado",
+  manual: "Manual",
+};
+
+export const DUPLICATE_LABELS: Record<DuplicateFlag, string> = {
+  nenhuma: "—",
+  possivel: "Possível duplicidade",
+  confirmada: "Duplicidade confirmada",
+  ignorada: "Duplicidade ignorada",
+};
