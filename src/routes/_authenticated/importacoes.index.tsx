@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/importacoes")({
+export const Route = createFileRoute("/_authenticated/importacoes/")({
   head: () => ({
     meta: [
       { title: `Importações — ${APP_NAME}` },
