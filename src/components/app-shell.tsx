@@ -45,6 +45,8 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/importacoes", label: "Importações", icon: Upload, permission: "import.execute" },
+  { to: "/lancamentos", label: "Lançamentos", icon: ReceiptText, permission: "transaction.view" },
   { to: "/instituicoes", label: "Instituições", icon: Landmark, permission: "institution.view" },
   { to: "/contas", label: "Contas", icon: Wallet, permission: "account.view" },
   { to: "/cartoes", label: "Cartões", icon: CreditCard, permission: "card.view" },
@@ -55,13 +57,12 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const FUTURE_ITEMS = [
-  { label: "Importações", icon: Upload, phase: "Fase 2" },
-  { label: "Lançamentos", icon: ReceiptText, phase: "Fase 2" },
   { label: "Faturas", icon: FileText, phase: "Fase 3" },
   { label: "Conciliação", icon: Scale, phase: "Fase 4" },
   { label: "Custos Financeiros", icon: TrendingDown, phase: "Fase 5" },
   { label: "Relatórios", icon: BarChart3, phase: "Fase 5" },
 ];
+
 
 export function FullScreenLoader() {
   return (
