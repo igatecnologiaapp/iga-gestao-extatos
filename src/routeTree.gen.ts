@@ -23,6 +23,7 @@ import { Route as AuthenticatedInstituicoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedImportacoesIndexRouteImport } from './routes/_authenticated/importacoes.index'
+import { Route as AuthenticatedImportacoesIdRouteImport } from './routes/_authenticated/importacoes.$id'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -96,6 +97,12 @@ const AuthenticatedImportacoesIndexRoute =
     path: '/importacoes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedImportacoesIdRoute =
+  AuthenticatedImportacoesIdRouteImport.update({
+    id: '/importacoes/$id',
+    path: '/importacoes/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/instituicoes': typeof AuthenticatedInstituicoesRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
   '/importacoes/': typeof AuthenticatedImportacoesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
+  '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
   '/importacoes': typeof AuthenticatedImportacoesIndexRoute
 }
 export interface FileRoutesById {
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
   '/_authenticated/importacoes/': typeof AuthenticatedImportacoesIndexRoute
 }
 export interface FileRouteTypes {
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/instituicoes'
     | '/onboarding'
     | '/usuarios'
+    | '/importacoes/$id'
     | '/importacoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/usuarios'
     | '/'
+    | '/importacoes/$id'
     | '/importacoes'
   id:
     | '__root__'
@@ -190,6 +202,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
+    | '/_authenticated/importacoes/$id'
     | '/_authenticated/importacoes/'
   fileRoutesById: FileRoutesById
 }
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportacoesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/importacoes/$id': {
+      id: '/_authenticated/importacoes/$id'
+      path: '/importacoes/$id'
+      fullPath: '/importacoes/$id'
+      preLoaderRoute: typeof AuthenticatedImportacoesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -313,6 +333,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedImportacoesIdRoute: typeof AuthenticatedImportacoesIdRoute
   AuthenticatedImportacoesIndexRoute: typeof AuthenticatedImportacoesIndexRoute
 }
 
@@ -326,6 +347,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedImportacoesIdRoute: AuthenticatedImportacoesIdRoute,
   AuthenticatedImportacoesIndexRoute: AuthenticatedImportacoesIndexRoute,
 }
 
