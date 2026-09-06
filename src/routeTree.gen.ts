@@ -20,6 +20,7 @@ import { Route as AuthenticatedCategoriasRouteImport } from './routes/_authentic
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
 import { Route as AuthenticatedInstituicoesRouteImport } from './routes/_authenticated/instituicoes'
+import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedImportacoesIndexRouteImport } from './routes/_authenticated/importacoes.index'
@@ -81,6 +82,12 @@ const AuthenticatedInstituicoesRoute =
     path: '/instituicoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLancamentosRoute =
+  AuthenticatedLancamentosRouteImport.update({
+    id: '/lancamentos',
+    path: '/lancamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -115,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
   '/instituicoes': typeof AuthenticatedInstituicoesRoute
+  '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
   '/instituicoes': typeof AuthenticatedInstituicoesRoute
+  '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contas': typeof AuthenticatedContasRoute
   '/_authenticated/instituicoes': typeof AuthenticatedInstituicoesRoute
+  '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/contas'
     | '/instituicoes'
+    | '/lancamentos'
     | '/onboarding'
     | '/usuarios'
     | '/importacoes/$id'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/contas'
     | '/instituicoes'
+    | '/lancamentos'
     | '/onboarding'
     | '/usuarios'
     | '/'
@@ -199,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes'
     | '/_authenticated/contas'
     | '/_authenticated/instituicoes'
+    | '/_authenticated/lancamentos'
     | '/_authenticated/onboarding'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInstituicoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/lancamentos': {
+      id: '/_authenticated/lancamentos'
+      path: '/lancamentos'
+      fullPath: '/lancamentos'
+      preLoaderRoute: typeof AuthenticatedLancamentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -330,6 +350,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContasRoute: typeof AuthenticatedContasRoute
   AuthenticatedInstituicoesRoute: typeof AuthenticatedInstituicoesRoute
+  AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -344,6 +365,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContasRoute: AuthenticatedContasRoute,
   AuthenticatedInstituicoesRoute: AuthenticatedInstituicoesRoute,
+  AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
