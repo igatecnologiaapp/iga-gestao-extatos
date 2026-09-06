@@ -479,7 +479,7 @@ function TransactionsContent({ company }: { company: Company }) {
               .update({ status: "inativo", updated_by: user?.id ?? null })
               .eq("id", removing.id);
             setRemoving(null);
-            if (error) return toast.error(`Não foi possível inativar: ${error.message}`);
+            if (error) { toast.error(`Não foi possível inativar: ${error.message}`); return; }
             toast.success("Lançamento inativado.");
             await refresh();
           }}
@@ -579,11 +579,11 @@ function TransactionDialog({
 
   async function save() {
     const parsedAmount = parseBRL(amount);
-    if (!postedAt) return toast.error("Informe a data do lançamento.");
-    if (!description.trim()) return toast.error("Informe a descrição do lançamento.");
+    if (!postedAt) { toast.error("Informe a data do lançamento."); return; }
+    if (!description.trim()) { toast.error("Informe a descrição do lançamento."); return; }
     if (parsedAmount === null || parsedAmount === 0)
-      return toast.error("Informe um valor válido maior que zero (ex.: 1.234,56).");
-    if (!targetId) return toast.error("Selecione a conta ou o cartão do lançamento.");
+      { toast.error("Informe um valor válido maior que zero (ex.: 1.234,56)."); return; }
+    if (!targetId) { toast.error("Selecione a conta ou o cartão do lançamento."); return; }
 
     const target = targets.find((t) => t.id === targetId);
     const normalized = description
@@ -618,7 +618,7 @@ function TransactionDialog({
           .from("transactions")
           .insert({ ...payload, origin: "manual", created_by: userId });
     setBusy(false);
-    if (error) return toast.error(`Não foi possível salvar: ${error.message}`);
+    if (error) { toast.error(`Não foi possível salvar: ${error.message}`); return; }
     toast.success(transaction ? "Lançamento atualizado." : "Lançamento criado.");
     await onSaved();
   }
