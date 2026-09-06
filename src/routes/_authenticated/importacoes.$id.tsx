@@ -181,7 +181,7 @@ function ReviewContent({ company }: { company: Company }) {
       })
       .in("id", [...selected]);
     setBusy(false);
-    if (error) return toast.error(`Não foi possível classificar: ${error.message}`);
+    if (error) { toast.error(`Não foi possível classificar: ${error.message}`); return; }
     toast.success(`${selected.size} lançamento(s) classificado(s).`);
     await refresh();
   }
@@ -194,7 +194,7 @@ function ReviewContent({ company }: { company: Company }) {
       .update({ status: "descartado" })
       .in("id", [...selected]);
     setBusy(false);
-    if (error) return toast.error(`Não foi possível descartar: ${error.message}`);
+    if (error) { toast.error(`Não foi possível descartar: ${error.message}`); return; }
     setSelected(new Set());
     toast.success("Lançamentos descartados desta revisão.");
     await refresh();
@@ -508,9 +508,9 @@ function EditStagedDialog({
 
   async function save() {
     const parsedAmount = parseBRL(amount);
-    if (!postedAt) return toast.error("Informe a data do lançamento.");
-    if (parsedAmount === null) return toast.error("Informe um valor válido (ex.: 1.234,56).");
-    if (!direction) return toast.error("Informe se o lançamento é entrada ou saída.");
+    if (!postedAt) { toast.error("Informe a data do lançamento."); return; }
+    if (parsedAmount === null) { toast.error("Informe um valor válido (ex.: 1.234,56)."); return; }
+    if (!direction) { toast.error("Informe se o lançamento é entrada ou saída."); return; }
     setBusy(true);
     const { error } = await supabase
       .from("staged_transactions")
@@ -531,7 +531,7 @@ function EditStagedDialog({
       })
       .eq("id", row.id);
     setBusy(false);
-    if (error) return toast.error(`Não foi possível salvar: ${error.message}`);
+    if (error) { toast.error(`Não foi possível salvar: ${error.message}`); return; }
     toast.success("Lançamento atualizado.");
     await onSaved();
   }
