@@ -182,7 +182,7 @@ function TransactionsContent({ company }: { company: Company }) {
     enabled: canView,
   });
 
-  const rows = transactions ?? [];
+  const rows = useMemo(() => transactions ?? [], [transactions]);
 
   const totals = useMemo(() => {
     let entrada = 0;
