@@ -1,7 +1,7 @@
-# RELATÓRIO TÉCNICO — FECHAMENTO DAS FASES 0 E 1
+# RELATÓRIO TÉCNICO — FECHAMENTO DAS FASES 0, 1 E IMPLEMENTAÇÃO DA FASE 2
 
 **Sistema:** Gestor de Extratos  
-**Escopo:** Fundação, segurança, auditoria, RBAC e cadastros financeiros  
+**Escopo:** Fundação, segurança, auditoria, RBAC, cadastros financeiros, importações e lançamentos  
 **Data da auditoria:** 26/08/2026  
 **Incidente:** P0 — erro de carregamento após login válido
 
@@ -245,3 +245,89 @@ O deployment validado expôs `x-deployment-id` próprio e `/health` com checkpoi
 Risco residual: o acesso inicial por `/` sem sessão registra o aviso React #418 durante o redirecionamento client-only para `/auth`. A tela de login é exibida, não há fallback nem indisponibilidade; acesso direto a `/auth`, Dashboard e recarga autenticada não registraram o aviso. Duas correções isoladas (supressão no script de bootstrap e SSR da rota de login) não o eliminaram e foram revertidas para evitar novas alterações por hipótese.
 
 **Status:** APLICAÇÃO RECUPERADA NO CHROME PÚBLICO. INCIDENTE P0 tecnicamente contido; homologação final das Fases 0 e 1 e relogin por senha dependem da validação manual do responsável. Fase 2 permanece bloqueada.
+
+---
+
+## 15. Fase 2 — Importação e gestão dos lançamentos
+
+### Controle de versão e escopo
+
+- SHA inicial: `27d9375f402acbe69041ff515987fc336344a613`.
+- SHA de referência do fechamento: `6310191ec70e2c057c86fa43dd594228b3cfc04d`.
+- Escopo encerrado em importação, revisão, classificação e gestão de lançamentos.
+- Não foram iniciadas conciliação avançada, OCR/IA, previsões, dashboards avançados, faturas ou qualquer item das Fases 3–6.
+
+### Migrações aplicadas
+
+1. `20260903020232_910ca1a4-9a35-418d-ba10-0739a3942ed0.sql`: enums e tabelas de importações, itens em revisão e lançamentos; GRANTs; RLS/RBAC; índices; auditoria; validações multiempresa; políticas do storage privado.
+2. `0000_fix_movement_company_reference_validation.sql`: valida referências opcionais pela representação JSON do registro, preservando a validação de empresa sem acessar colunas inexistentes em lotes de importação.
+3. `0001_revoke_anonymous_phase2_table_writes.sql`: remove de visitantes anônimos qualquer privilégio de inclusão, alteração ou exclusão nas três tabelas da Fase 2.
+
+### Arquivos e formatos suportados
+
+- PDF com camada de texto, OFX, CSV, XLS e XLSX.
+- Arquitetura de parsers separada por formato e preparada para inclusão de novos adaptadores.
+- Os arquivos originais ficam no bucket privado `financial-documents`, em caminho segregado pela empresa, com acesso por URL temporária autorizada.
+- Metadados registrados: empresa, usuário, data/hora, nome original, formato, tamanho, origem, instituição, conta/cartão, período, estado e hash SHA-256.
+- PDF digitalizado sem camada de texto não é processado nesta fase porque OCR foi expressamente excluído.
+
+### Fluxo implementado
+
+`ARQUIVO → UPLOAD → PROCESSAMENTO → REVISÃO → CLASSIFICAÇÃO → CONFIRMAÇÃO → LANÇAMENTO → FILTRO → TOTALIZAÇÃO`
+
+1. A Central de Importações solicita origem (conta ou cartão), instituição, conta/cartão, período e arquivo.
+2. O arquivo é validado, recebe hash e é enviado ao armazenamento privado.
+3. O lote percorre `Recebido → Processando → Revisão`, com estados alternativos `Erro` e `Cancelado`.
+4. Data, descrição, valor, natureza e origem são normalizados sem perder casas decimais ou sinal de crédito/débito.
+5. A classificação inicial usa categorias existentes e contempla Compra, Taxa, Juros e Não classificado.
+6. A revisão é obrigatória; permite editar, classificar em lote, descartar e confirmar itens.
+7. A confirmação cria lançamentos com proveniência do lote e do item revisado.
+8. A Central de Lançamentos oferece filtros por período, instituição, conta, cartão, categoria, natureza, origem e descrição, além de totais de entradas, saídas, saldo e resumo por categoria.
+9. Lançamentos manuais podem ser criados, editados e inativados, mantendo a origem `Manual`; itens confirmados mantêm a origem `Importado`.
+
+### Duplicidade, segurança e auditoria
+
+- Nível de arquivo: hash SHA-256 por empresa sinaliza/rejeita reenvio do mesmo documento.
+- Nível de lançamento: impressão digital por empresa, data, descrição normalizada, valor e natureza marca `Possível duplicidade` para revisão humana.
+- As políticas exigem vínculo ativo com a empresa e as permissões `import.execute`, `transaction.view` ou `transaction.manage`, conforme a operação.
+- Não há uso de acesso privilegiado nas operações da aplicação; o usuário atua sob RLS.
+- Gatilhos impedem referências de instituição, conta, cartão, categoria ou subcategoria pertencentes a outra empresa.
+- Lotes e lançamentos são auditados em criação, alteração, confirmação, mudança de estado e inativação, com dados anteriores e posteriores.
+- O linter do banco não encontrou problemas de segurança ou configuração.
+
+### Experiência responsiva
+
+- Desktop: revisão e lançamentos em tabelas densas e pesquisáveis.
+- Mobile: importações e lançamentos em cards, menu recolhível e filtros em seção expansível.
+- Totais e ações principais permanecem visíveis sem sobreposição em 390 × 844 px.
+
+### Evidências e resultado
+
+| Verificação | Resultado |
+|---|---|
+| 50 testes unitários, incluindo 20 dos parsers e duplicidade | PASS |
+| 61 cenários de segurança RLS/RBAC/storage/auditoria | PASS |
+| Typecheck | PASS |
+| Lint | PASS sem erros; 9 avisos preexistentes e não bloqueantes |
+| Build observado | PASS |
+| Linter do banco | PASS — nenhuma ocorrência |
+| Upload CSV → revisão de 4 itens → confirmação → lançamentos e totais | PASS |
+| Console durante o fluxo E2E | PASS — nenhum erro |
+| Interface desktop | PASS |
+| Interface mobile autenticada em 390 × 844 px | PASS |
+| PDF com camada de texto, OFX, CSV e XLSX em testes automatizados | PASS |
+| XLS legado | SUPORTADO pelo adaptador tabular; fixture automatizada específica não incluída |
+| PDF digitalizado/OCR | SKIP — fora do escopo |
+| Homologação funcional pelo responsável do produto | PENDENTE |
+
+### Limitações e riscos residuais
+
+1. Layouts de CSV/XLS/XLSX muito diferentes das colunas reconhecidas podem exigir novo mapeamento.
+2. PDFs bancários variam por instituição; sem camada textual ou com layout não tabular exigirão adaptador futuro, não OCR nesta fase.
+3. A detecção de lançamento duplicado é deliberadamente conservadora e exige decisão na revisão.
+4. Os testes de segurança legados mantêm o título “Fases 0 e 1”, embora também validem os GRANTs globais que cobrem as tabelas adicionadas.
+5. Os dados E2E são fictícios e não contêm informações bancárias reais.
+
+### Situação da fase
+
+**FASE 2 IMPLEMENTADA — AGUARDANDO VALIDAÇÃO/HOMOLOGAÇÃO.** O desenvolvimento deve parar neste ponto; a Fase 3 permanece bloqueada até autorização expressa.
