@@ -141,6 +141,20 @@ describe("XLSX", () => {
     });
     expect(result.rows[2]).toMatchObject({ amount: 1200, direction: "entrada" });
   });
+
+  it("lê planilha XLS legado real (BIFF8)", async () => {
+    const buffer = readFileSync(fixture("extrato.xls"));
+    const result = await parseXlsxBuffer(
+      buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer,
+    );
+    expect(result.rows).toHaveLength(3);
+    expect(result.rows[0]).toMatchObject({
+      posted_at: "2026-01-02",
+      amount: 450.25,
+      direction: "saida",
+    });
+    expect(result.rows[2]).toMatchObject({ amount: 1200, direction: "entrada" });
+  });
 });
 
 describe("classificação inicial", () => {
