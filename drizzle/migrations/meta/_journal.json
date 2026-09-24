@@ -15,6 +15,13 @@
       "when": 1790217033526,
       "tag": "0001_revoke_anonymous_phase2_table_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790249575785,
+      "tag": "0002_restrict_permission_catalog_and_phase2_grants",
+      "breakpoints": true
     }
   ]
 }

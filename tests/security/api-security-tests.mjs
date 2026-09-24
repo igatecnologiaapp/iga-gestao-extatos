@@ -152,6 +152,57 @@ async function seed() {
     { company_id: ids.beta, institution_id: ids.instBeta, nickname: "Cartão Beta", last_four_digits: "9876" },
   ]);
 
+  const { data: betaImport, error: betaImportError } = await admin
+    .from("import_batches")
+    .insert({
+      company_id: ids.beta,
+      source_type: "conta",
+      file_name: "qa-extrato.csv",
+      file_format: "csv",
+      file_size: 128,
+      file_hash: `qa-${stamp}`,
+      storage_path: `${ids.beta}/qa-${stamp}/extrato.csv`,
+      status: "revisao",
+    })
+    .select("id")
+    .single();
+  if (betaImportError) throw new Error(`falha ao criar lote beta: ${betaImportError.message}`);
+  ids.importBeta = betaImport.id;
+
+  const { data: betaStaged, error: betaStagedError } = await admin
+    .from("staged_transactions")
+    .insert({
+      company_id: ids.beta,
+      import_id: ids.importBeta,
+      posted_at: "2026-01-02",
+      description: "Lançamento fictício QA",
+      normalized_description: "lancamento ficticio qa",
+      amount: 10,
+      direction: "saida",
+    })
+    .select("id")
+    .single();
+  if (betaStagedError) throw new Error(`falha ao criar item beta: ${betaStagedError.message}`);
+  ids.stagedBeta = betaStaged.id;
+
+  const { data: betaTransaction, error: betaTransactionError } = await admin
+    .from("transactions")
+    .insert({
+      company_id: ids.beta,
+      import_id: ids.importBeta,
+      source_type: "conta",
+      posted_at: "2026-01-02",
+      description: "Lançamento fictício QA",
+      normalized_description: "lancamento ficticio qa",
+      amount: 10,
+      direction: "saida",
+      origin: "importado",
+    })
+    .select("id")
+    .single();
+  if (betaTransactionError) throw new Error(`falha ao criar lançamento beta: ${betaTransactionError.message}`);
+  ids.transactionBeta = betaTransaction.id;
+
   const cat = async (company, name) =>
     (await admin.from("transaction_categories").insert({ company_id: ids[company], name }).select("id").single()).data.id;
   ids.catAlfa = await cat("alfa", "Categoria Alfa QA");
@@ -168,6 +219,9 @@ async function signIn(u) {
 async function cleanup() {
   for (const table of [
     "audit_log",
+    "transactions",
+    "staged_transactions",
+    "import_batches",
     "transaction_subcategories",
     "transaction_categories",
     "cards",
@@ -225,6 +279,9 @@ async function main() {
   await deny("ANON-04", "Visitante anônimo não cria empresa", () => anon.from("companies").insert({ name: "invasor" }).select());
   await deny("ANON-05", "Visitante anônimo não lê documentos do storage", () =>
     anon.storage.from("financial-documents").list(ids.alfa).then((r) => ({ data: r.data, error: r.error })));
+  await deny("ANON-06", "Visitante anônimo não lê lotes de importação", () => anon.from("import_batches").select("id"));
+  await deny("ANON-07", "Visitante anônimo não lê itens em revisão", () => anon.from("staged_transactions").select("id"));
+  await deny("ANON-08", "Visitante anônimo não lê lançamentos", () => anon.from("transactions").select("id"));
 
   // ============ SEC — isolamento multiempresa ============
   const conAlfa = await signIn(users.conAlfa);
@@ -250,6 +307,30 @@ async function main() {
     adminAlfa.from("companies").update({ name: "sequestrada" }).eq("id", ids.beta).select());
   await deny("SEC-14", "Administrador da Alfa não vincula usuários à Empresa Beta", () =>
     adminAlfa.from("user_roles").insert({ user_id: users.adminAlfa.id, company_id: ids.beta, role: "admin" }).select());
+  await count("SEC-15", "Usuário da Alfa não lê lotes de importação da Empresa Beta", () =>
+    adminAlfa.from("import_batches").select("id").eq("id", ids.importBeta), 0);
+  await deny("SEC-16", "Usuário da Alfa não cria lote na Empresa Beta", () =>
+    adminAlfa.from("import_batches").insert({ company_id: ids.beta, source_type: "conta", file_name: "invasao.csv", file_format: "csv", file_hash: `invasao-${stamp}`, storage_path: `${ids.beta}/invasao.csv` }).select());
+  await deny("SEC-17", "Usuário da Alfa não altera lote da Empresa Beta", () =>
+    adminAlfa.from("import_batches").update({ status: "cancelado" }).eq("id", ids.importBeta).select());
+  await deny("SEC-18", "Usuário da Alfa não exclui lote da Empresa Beta", () =>
+    adminAlfa.from("import_batches").delete().eq("id", ids.importBeta).select());
+  await count("SEC-19", "Usuário da Alfa não lê itens em revisão da Empresa Beta", () =>
+    adminAlfa.from("staged_transactions").select("id").eq("id", ids.stagedBeta), 0);
+  await deny("SEC-20", "Usuário da Alfa não cria item em revisão na Empresa Beta", () =>
+    adminAlfa.from("staged_transactions").insert({ company_id: ids.beta, import_id: ids.importBeta, description: "invasao", row_index: 99 }).select());
+  await deny("SEC-21", "Usuário da Alfa não altera item em revisão da Empresa Beta", () =>
+    adminAlfa.from("staged_transactions").update({ description: "invasao" }).eq("id", ids.stagedBeta).select());
+  await deny("SEC-22", "Usuário da Alfa não exclui item em revisão da Empresa Beta", () =>
+    adminAlfa.from("staged_transactions").delete().eq("id", ids.stagedBeta).select());
+  await count("SEC-23", "Usuário da Alfa não lê lançamentos da Empresa Beta", () =>
+    adminAlfa.from("transactions").select("id").eq("id", ids.transactionBeta), 0);
+  await deny("SEC-24", "Usuário da Alfa não cria lançamento na Empresa Beta", () =>
+    adminAlfa.from("transactions").insert({ company_id: ids.beta, source_type: "conta", posted_at: "2026-01-03", description: "invasao", amount: 10, direction: "saida" }).select());
+  await deny("SEC-25", "Usuário da Alfa não altera lançamento da Empresa Beta", () =>
+    adminAlfa.from("transactions").update({ description: "invasao" }).eq("id", ids.transactionBeta).select());
+  await deny("SEC-26", "Usuário da Alfa não exclui lançamento da Empresa Beta", () =>
+    adminAlfa.from("transactions").delete().eq("id", ids.transactionBeta).select());
 
   // ============ RBAC — matriz de permissões ============
   await deny("RBAC-01", "Perfil Consulta não cadastra instituição", () =>
