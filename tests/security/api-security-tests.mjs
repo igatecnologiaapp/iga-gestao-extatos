@@ -219,6 +219,9 @@ async function signIn(u) {
 async function cleanup() {
   for (const table of [
     "audit_log",
+    "transactions",
+    "staged_transactions",
+    "import_batches",
     "transaction_subcategories",
     "transaction_categories",
     "cards",
