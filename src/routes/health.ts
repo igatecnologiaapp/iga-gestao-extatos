@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const CHECKPOINT_SHA = "49b6b965ea6f1b1b04ede791df2ab1e2f6187a4b";
+declare const __BUILD_COMMIT__: string;
+declare const __BUILD_TIME__: string;
+
+// SHA gravado no build (git rev-parse HEAD). Sem valor estático de checkpoint.
+const BUILD_COMMIT = typeof __BUILD_COMMIT__ === "string" ? __BUILD_COMMIT__ : "unknown";
+const BUILD_TIME = typeof __BUILD_TIME__ === "string" ? __BUILD_TIME__ : "unknown";
 
 export const Route = createFileRoute("/health")({
   server: {
@@ -10,11 +15,11 @@ export const Route = createFileRoute("/health")({
           process.env["LOVABLE_GIT_COMMIT_SHA"] ??
           process.env["CF_PAGES_COMMIT_SHA"] ??
           process.env["VERCEL_GIT_COMMIT_SHA"] ??
-          CHECKPOINT_SHA;
+          BUILD_COMMIT;
         const build =
           process.env["LOVABLE_DEPLOYMENT_ID"] ??
           process.env["CF_PAGES_BUILD_ID"] ??
-          `checkpoint-${CHECKPOINT_SHA.slice(0, 12)}`;
+          "see x-deployment-id response header";
 
         return Response.json(
           {
@@ -22,6 +27,7 @@ export const Route = createFileRoute("/health")({
             status: "ok",
             commit,
             build,
+            builtAt: BUILD_TIME,
             backendRuntime: {
               urlConfigured: Boolean(process.env["SUPABASE_URL"]),
               publishableKeyConfigured: Boolean(process.env["SUPABASE_PUBLISHABLE_KEY"]),
