@@ -64,6 +64,31 @@ describe("valores e datas", () => {
     expect(parseDate("02/13/2026")).toBeNull();
     expect(parseDate("")).toBeNull();
   });
+
+  it("aceita datas válidas nos formatos dos parsers", () => {
+    // CSV/XLSX textuais
+    expect(parseDate("26/09/2026")).toBe("2026-09-26");
+    expect(parseDate("26-09-2026")).toBe("2026-09-26");
+    expect(parseDate("2026-09-26")).toBe("2026-09-26");
+    // OFX (yyyyMMdd, com hora)
+    expect(parseDate("20260926")).toBe("2026-09-26");
+    expect(parseDate("20260926120000")).toBe("2026-09-26");
+    // Serial de planilha (26/09/2026)
+    expect(parseDate(46291)).toBe("2026-09-26");
+  });
+
+  it("rejeita datas inválidas sem criar data fictícia", () => {
+    expect(parseDate("0000-00-00")).toBeNull();
+    expect(parseDate("00/00/0000")).toBeNull();
+    expect(parseDate("00000000")).toBeNull();
+    expect(parseDate("31/02/2026")).toBeNull(); // 31 de fevereiro não existe
+    expect(parseDate("31/04/2026")).toBeNull(); // abril tem 30 dias
+    expect(parseDate("   ")).toBeNull();
+    expect(parseDate(null)).toBeNull();
+    expect(parseDate(undefined)).toBeNull();
+    expect(parseDate("não é uma data")).toBeNull();
+    expect(parseDate("32/01/2026")).toBeNull();
+  });
 });
 
 describe("CSV", () => {

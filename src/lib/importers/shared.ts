@@ -70,8 +70,24 @@ export function parseAmount(input: string | number | null | undefined): {
   return { value: Math.round(Math.abs(n) * 100) / 100, negative, ambiguous: false };
 }
 
-/** Converte data em ISO (yyyy-mm-dd). Aceita dd/mm/aaaa, aaaa-mm-dd, dd-mm-aa e Date. */
-export function parseDate(input: string | number | Date | null | undefined): string | null {
+/**
+ * Valida se uma data ISO (yyyy-mm-dd) existe no calendário e está em faixa plausível.
+ * Datas como 0000-00-00, 00/00/0000, 31/02/2026 ou fora de 1900–2100 são inválidas.
+ */
+export function isValidIsoDate(iso: string | null | undefined): boolean {
+  if (!iso) return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return false;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (year < 1900 || year > 2100) return false;
+  if (month < 1 || month > 12) return false;
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return day >= 1 && day <= daysInMonth;
+}
+
+function parseIsoUnsafe(input: string | number | Date | null | undefined): string | null {
   if (input === null || input === undefined || input === "") return null;
   if (input instanceof Date && !Number.isNaN(input.getTime())) return toIso(input);
   if (typeof input === "number") {
@@ -81,6 +97,7 @@ export function parseDate(input: string | number | Date | null | undefined): str
     return Number.isNaN(d.getTime()) ? null : toIso(d);
   }
   const text = String(input).trim();
+  if (!text) return null;
   let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/.exec(text);
@@ -89,12 +106,21 @@ export function parseDate(input: string | number | Date | null | undefined): str
     const month = m[2]!.padStart(2, "0");
     let year = m[3]!;
     if (year.length === 2) year = Number(year) > 60 ? `19${year}` : `20${year}`;
-    if (Number(month) > 12) return null;
     return `${year}-${month}-${day}`;
   }
   m = /^(\d{4})(\d{2})(\d{2})/.exec(text); // OFX: 20240131...
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   return null;
+}
+
+/**
+ * Converte data em ISO (yyyy-mm-dd). Aceita dd/mm/aaaa, aaaa-mm-dd, dd-mm-aa, OFX e Date.
+ * Datas inválidas/impossíveis (0000-00-00, 00/00/0000, 31/02/2026, texto não reconhecido)
+ * retornam null — nunca uma data fictícia; o item segue para a Revisão como pendência.
+ */
+export function parseDate(input: string | number | Date | null | undefined): string | null {
+  const iso = parseIsoUnsafe(input);
+  return isValidIsoDate(iso) ? iso : null;
 }
 
 function toIso(d: Date): string {
