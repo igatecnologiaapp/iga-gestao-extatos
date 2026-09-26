@@ -474,3 +474,50 @@ O responsável pelo projeto registrou a **HOMOLOGAÇÃO FORMAL DA FASE 2 — IMP
 **FASE 2 HOMOLOGADA PELO RESPONSÁVEL DO PROJETO.**
 **FASES 0, 1 E 2 HOMOLOGADAS.**
 **FASE 3 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.**
+
+## 19. CORREÇÃO COMPLEMENTAR PÓS-HOMOLOGAÇÃO — DATAS DA IMPORTAÇÃO + MENU RECOLHÍVEL (26/09/2026)
+
+Correção dos dois ajustes complementares solicitados após a homologação. Nenhuma regra de Fases 0–2 foi alterada; Fase 3 permanece bloqueada.
+
+### 19.1 Diagnóstico da causa raiz do erro `0000-00-00`
+
+- **Arquivo/parser:** todos os parsers da Fase 2 (`src/lib/importers/`: CSV/XLSX em `tabular.ts`, OFX em `ofx.ts`, PDF em `pdf.ts`) convertem datas pela função central `parseDate` em `src/lib/importers/shared.ts`.
+- **Etapa:** parsing → staging. O valor não veio do arquivo: foi **criado pelo sistema** ao não conseguir interpretar a data.
+- **Causa raiz:** `parseDate` só rejeitava mês > 12 e não validava o calendário. Entradas como `00/00/0000`, datas OFX `00000000` e dias impossíveis (`31/02`) geravam o literal `"0000-00-00"`, gravado em `staged_transactions.posted_at` (coluna `date`) e rejeitado pelo PostgreSQL na confirmação/persistência (`date/time field value out of range`).
+
+### 19.2 Correção aplicada (normalização central)
+
+- `parseDate` (`shared.ts`) agora valida via `isValidIsoDate`: ISO `yyyy-mm-dd` existente no calendário, ano 1900–2100, mês 1–12, dia ≤ dias do mês.
+- Datas inválidas (`0000-00-00`, `00/00/0000`, `00000000`, `31/02/2026`, vazia, espaços, `null`, `undefined`, texto não reconhecido) retornam `null` — **nunca data fictícia** (sem data atual, sem 1970, sem data da importação). O valor original permanece preservado em `staged_transactions.raw`.
+- A correção é central: vale automaticamente para CSV, OFX, XLS/XLSX e PDF textual, sem alterar os parsers individuais.
+- Tela de Revisão: item sem data válida exibe **"Data inválida — informe a data da transação"** (desktop e mobile) e o banner de pendências orienta o preenchimento; a confirmação continua exigindo data, valor e natureza completos.
+
+### 19.3 Menu lateral recolhível
+
+- `src/components/app-shell.tsx`: navegação reorganizada em categorias **Painel, Movimentações, Cadastros, Administração e Configurações**, com submenus recolhíveis por clique (chevron + `aria-expanded`).
+- O grupo da rota ativa abre automaticamente; grupos sem itens visíveis (RBAC por permissão) não são exibidos. Bloco "Próximas fases" mantido. Mobile inalterado em comportamento.
+
+### 19.4 Testes e validação
+
+| Verificação | Resultado |
+| --- | --- |
+| Testes unitários (incl. novos casos de datas válidas e inválidas) | 53/53 PASS |
+| Testes de segurança RLS/RBAC/Storage | 76/76 PASS |
+| Typecheck / Lint | PASS / 0 erros |
+| Reprodução do erro `0000-00-00` (CSV com `00/00/0000` via tela de importação) | NÃO reproduzido — arquivo processado, item em Revisão marcado "Data inválida — informe a data da transação", sem erro de banco |
+| Menu: grupos, recolher/expandir, grupo ativo automático, RBAC | PASS (desktop) |
+| Mobile 390×844 (revisão + menu) | PASS |
+| Console | 0 erros |
+| Dados de teste | Fictícios; registros de teste removidos do banco após a validação |
+
+### 19.5 Publicação
+
+| Item | Valor |
+| --- | --- |
+| SHA anterior | `a8a439749ef174c2788a96c851c78f7252de558a` |
+| SHA publicado (confirmado em `/health`) | `54231982ce0bb468dc4fbfe9ca52246e56a3d681` |
+| Deployment | `psr2.25753728-1e59-4867-80df-1b0a918173e6.1791064542.ME1EOqEnnu5rXP-dPkRrXFWRK44dkh74K6WV_g-OI68` |
+| URL pública | https://iga-gestao-extatos.lovable.app |
+| `/health` / `/auth` | PASS / 200 |
+
+**Status: FASES 0, 1 E 2 PERMANECEM HOMOLOGADAS. CORREÇÃO COMPLEMENTAR IMPLEMENTADA, TESTADA E PUBLICADA. FASE 3 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.**
