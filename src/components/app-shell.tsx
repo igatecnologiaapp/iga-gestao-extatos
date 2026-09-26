@@ -231,9 +231,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     navigate({ to: "/auth", replace: true });
   }
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.permission || hasPermission(item.permission),
-  );
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.permission || hasPermission(item.permission)),
+  })).filter((group) => group.items.length > 0);
+
+  const activeGroupLabel = visibleGroups.find((group) =>
+    group.items.some((item) => (item.to === "/" ? pathname === "/" : pathname.startsWith(item.to))),
+  )?.label;
+
+  // Grupos abertos manualmente pelo usuário; sem override, segue o grupo ativo.
+  const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
+  const isGroupOpen = (label: string) =>
+    groupOverrides[label] ?? label === activeGroupLabel;
+  const toggleGroup = (label: string) =>
+    setGroupOverrides((prev) => ({ ...prev, [label]: !(prev[label] ?? label === activeGroupLabel) }));
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -273,24 +285,51 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         )}
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
-        {visibleItems.map((item) => {
-          const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+        {visibleGroups.map((group) => {
+          const open = isGroupOpen(group.label);
           return (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={onNavigate}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/75 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+            <div key={group.label}>
+              <button
+                type="button"
+                onClick={() => toggleGroup(group.label)}
+                aria-expanded={open}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors",
+                  open
+                    ? "text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/55 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+                )}
+              >
+                <span className="flex-1 text-left">{group.label}</span>
+                <ChevronDown
+                  className={cn("h-3.5 w-3.5 shrink-0 transition-transform", !open && "-rotate-90")}
+                />
+              </button>
+              {open && (
+                <div className="ml-3 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
+                  {group.items.map((item) => {
+                    const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={onNavigate}
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                          active
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground/75 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
+            </div>
           );
         })}
 
