@@ -427,3 +427,10 @@ Fluxo executado com arquivo fictício (`tests/fixtures/extrato.csv`, sem dados b
 **FASE 2 IMPLEMENTADA E TECNICAMENTE VALIDADA NO AMBIENTE PUBLICADO — AGUARDANDO HOMOLOGAÇÃO DO RESPONSÁVEL.**
 
 **FASE 3 PERMANECE BLOQUEADA.** Desenvolvimento encerrado neste ponto.
+
+## 17. Reconciliação de SHA/deployment
+
+- Antes: `/health` retornava `49b6b965ea6f…`, que era uma **constante estática de fallback** (`CHECKPOINT_SHA`) em `src/routes/health.ts`, correspondente ao commit histórico "Simplificou build publicável" (anterior à Fase 2). O ambiente hospedado não injeta variável de SHA, então o fallback sempre era exibido. Não representava o código publicado.
+- Deployment `psr2.a137a48c-7559-400f-9989-c0e758e185cc`: o código executado continha a Fase 2 e as correções de segurança (comprovado funcionalmente: Central de Importações, Lançamentos, duplicidade e testes de segurança contra o backend), mas o SHA exato não era identificável pelo `/health`.
+- Correção (somente metadata): `vite.config.ts` grava `git rev-parse HEAD` e horário do build (`__BUILD_COMMIT__`, `__BUILD_TIME__`); `src/routes/health.ts` passa a informar esse SHA e `builtAt`, sem constante estática. O deployment ID é o cabeçalho `x-deployment-id`.
+- Nenhuma alteração em banco, RLS/RBAC, storage, parsers, importações, lançamentos ou autenticação.
