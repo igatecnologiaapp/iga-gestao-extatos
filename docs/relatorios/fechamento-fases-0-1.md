@@ -331,3 +331,99 @@ Risco residual: o acesso inicial por `/` sem sessão registra o aviso React #418
 ### Situação da fase
 
 **FASE 2 IMPLEMENTADA — AGUARDANDO VALIDAÇÃO/HOMOLOGAÇÃO.** O desenvolvimento deve parar neste ponto; a Fase 3 permanece bloqueada até autorização expressa.
+
+---
+
+## 16. Fase 2 — Publicação e validação final no ambiente público
+
+### 16.1 Publicação
+
+| Item | Valor |
+| --- | --- |
+| URL pública | https://iga-gestao-extatos.lovable.app |
+| SHA publicado (confirmado em `/health`) | `49b6b965ea6f1b1b04ede791df2ab1e2f6187a4b` |
+| Identificador do deployment | `psr2.a137a48c-7559-400f-9989-c0e758e185cc` |
+| Data/hora da verificação pública (UTC) | 2026-09-26 |
+| Build | PASS — `/health` responde HTTP 200 com `status: ok` e runtime do backend configurado |
+| Correspondência ambiente público × estado aprovado | CONFIRMADA |
+
+### 16.2 Regressão das Fases 0 e 1 (ambiente publicado)
+
+| Verificação | Resultado |
+| --- | --- |
+| `/health` | PASS — HTTP 200 |
+| `/auth` | PASS — HTTP 200, tela de login renderizada |
+| Sessão autenticada de e-mail/senha (conta igatecnologia.app@gmail.com) | PASS |
+| Dashboard | PASS |
+| Contexto da empresa (empresa exibida no menu lateral) | PASS |
+| RBAC (itens de menu filtrados por permissão) | PASS |
+| Cadastros existentes (Instituições com registros) | PASS |
+| Refresh completo da página | PASS — Dashboard recarrega sem erro |
+| Logout | PASS — redireciona para `/auth` |
+| Relogin | PASS — Dashboard novamente disponível |
+
+### 16.3 Fase 2 no ambiente público
+
+Fluxo executado com arquivo fictício (`tests/fixtures/extrato.csv`, sem dados bancários reais).
+
+| Etapa | Resultado |
+| --- | --- |
+| Importações → Nova importação (instituição + conta bancária) | PASS |
+| Upload e processamento | PASS |
+| Arquivo armazenado em storage privado (abertura por URL temporária em “Arquivo original”) | PASS |
+| Lançamentos extraídos (4 itens) | PASS |
+| Revisão obrigatória antes da confirmação | PASS |
+| Edição/classificação na revisão | PASS |
+| Confirmação | PASS — aviso “Importação concluída” |
+| Lançamentos apresentados corretamente | PASS |
+| Entradas / Saídas / Saldo | PASS — R$ 7.000,00 / R$ 2.613,62 / R$ 4.386,38 |
+| Totais por categoria (Compra, Taxa, Juros, Não classificado) | PASS |
+| Filtros (busca por descrição) | PASS — 1 registro, totais recalculados |
+| Rastreabilidade da importação (lote, arquivo original e origem “Importado”) | PASS |
+
+### 16.4 Duplicidade (ambiente publicado)
+
+| Verificação | Resultado |
+| --- | --- |
+| Reenvio do mesmo arquivo → aviso de duplicidade de arquivo com ação explícita “Importar mesmo assim” | PASS |
+| Processamento só ocorre após decisão do usuário | PASS |
+| Lançamentos duplicados sinalizados como “Possível duplicidade” (4 de 4) | PASS |
+| Ausência de exclusão ou decisão automática | PASS — itens permanecem pendentes aguardando revisão |
+
+### 16.5 Mobile (390 × 844 px, ambiente publicado)
+
+| Verificação | Resultado |
+| --- | --- |
+| Menu lateral (abrir/fechar) | PASS |
+| Importações | PASS |
+| Revisão em cards | PASS |
+| Lançamentos em cards (8 registros) | PASS |
+| Filtros recolhíveis | PASS |
+| Valores e ações visíveis | PASS |
+| Sobreposição ou rolagem horizontal indevida | NENHUMA |
+
+### 16.6 Console e rede (ambiente publicado)
+
+| Verificação | Resultado |
+| --- | --- |
+| Erros de console | 0 |
+| Erros JavaScript | 0 |
+| Respostas HTTP 4xx/5xx | 0 |
+| Erros de autenticação, RLS ou storage | 0 |
+
+### 16.7 Segurança (sem novas alterações nesta rodada)
+
+| Item | Resultado |
+| --- | --- |
+| Testes unitários | 51/51 PASS |
+| Cenários de segurança | 76/76 PASS |
+| Scanner de segurança | Sem alertas |
+| Critical | 0 |
+| High | 0 |
+| Fase 3 | Não iniciada |
+
+### 16.8 Situação
+
+**FASE 2 IMPLEMENTADA E TECNICAMENTE VALIDADA NO AMBIENTE PUBLICADO — AGUARDANDO HOMOLOGAÇÃO DO RESPONSÁVEL.**
+
+**FASE 3 PERMANECE BLOQUEADA.** Desenvolvimento encerrado neste ponto.
