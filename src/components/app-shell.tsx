@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Building2,
+  ChevronDown,
   CreditCard,
   FileText,
   Landmark,
@@ -43,17 +44,44 @@ type NavItem = {
   permission?: string;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/importacoes", label: "Importações", icon: Upload, permission: "import.execute" },
-  { to: "/lancamentos", label: "Lançamentos", icon: ReceiptText, permission: "transaction.view" },
-  { to: "/instituicoes", label: "Instituições", icon: Landmark, permission: "institution.view" },
-  { to: "/contas", label: "Contas", icon: Wallet, permission: "account.view" },
-  { to: "/cartoes", label: "Cartões", icon: CreditCard, permission: "card.view" },
-  { to: "/categorias", label: "Categorias", icon: Tags, permission: "category.view" },
-  { to: "/usuarios", label: "Usuários", icon: Users, permission: "member.manage" },
-  { to: "/auditoria", label: "Auditoria", icon: ScrollText, permission: "audit.view" },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+/** Menu lateral organizado em categorias com submenus recolhíveis. */
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Painel",
+    items: [{ to: "/", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Movimentações",
+    items: [
+      { to: "/importacoes", label: "Importações", icon: Upload, permission: "import.execute" },
+      { to: "/lancamentos", label: "Lançamentos", icon: ReceiptText, permission: "transaction.view" },
+    ],
+  },
+  {
+    label: "Cadastros",
+    items: [
+      { to: "/instituicoes", label: "Instituições", icon: Landmark, permission: "institution.view" },
+      { to: "/contas", label: "Contas", icon: Wallet, permission: "account.view" },
+      { to: "/cartoes", label: "Cartões", icon: CreditCard, permission: "card.view" },
+      { to: "/categorias", label: "Categorias", icon: Tags, permission: "category.view" },
+    ],
+  },
+  {
+    label: "Administração",
+    items: [
+      { to: "/usuarios", label: "Usuários", icon: Users, permission: "member.manage" },
+      { to: "/auditoria", label: "Auditoria", icon: ScrollText, permission: "audit.view" },
+    ],
+  },
+  {
+    label: "Configurações",
+    items: [{ to: "/configuracoes", label: "Configurações", icon: Settings }],
+  },
 ];
 
 const FUTURE_ITEMS = [
