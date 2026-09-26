@@ -261,7 +261,7 @@ function ReviewContent({ company }: { company: Company }) {
                 {summary.duplicates > 0 &&
                   `${summary.duplicates} lançamento(s) com possível duplicidade. `}
                 {summary.incomplete > 0 &&
-                  `${summary.incomplete} lançamento(s) sem data, valor ou natureza — corrija antes de confirmar.`}
+                  `${summary.incomplete} lançamento(s) com data inválida ou ausente — Data inválida: informe a data da transação (e complete valor/natureza) antes de confirmar.`}
               </span>
             </p>
           </div>
@@ -375,7 +375,17 @@ function ReviewContent({ company }: { company: Company }) {
                       />
                     )}
                   </TableCell>
-                  <TableCell>{s.posted_at ? formatDate(s.posted_at) : "—"}</TableCell>
+                  <TableCell>
+                    {s.posted_at ? (
+                      formatDate(s.posted_at)
+                    ) : s.status === "pendente" ? (
+                      <span className="text-xs text-amber-700 dark:text-amber-400">
+                        Data inválida — informe a data da transação
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
                   <TableCell className="max-w-[22rem] truncate">{s.description}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {s.amount === null ? "—" : formatBRL(Number(s.amount))}
@@ -416,7 +426,16 @@ function ReviewContent({ company }: { company: Company }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{s.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {s.posted_at ? formatDate(s.posted_at) : "sem data"} · {categoryName(s.category_id)}
+                    {s.posted_at ? (
+                      formatDate(s.posted_at)
+                    ) : s.status === "pendente" ? (
+                      <span className="text-amber-700 dark:text-amber-400">
+                        Data inválida — informe a data da transação
+                      </span>
+                    ) : (
+                      "sem data"
+                    )}{" "}
+                    · {categoryName(s.category_id)}
                   </p>
                 </div>
                 <div className="text-right">
