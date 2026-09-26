@@ -436,3 +436,41 @@ Fluxo executado com arquivo fictício (`tests/fixtures/extrato.csv`, sem dados b
 - Nenhuma alteração em banco, RLS/RBAC, storage, parsers, importações, lançamentos ou autenticação.
 - Verificação pós-correção (público): `/health` → commit `a8a439749ef174c2788a96c851c78f7252de558a` (= HEAD do repositório, contém Fase 2 + correções de segurança), deployment `psr2.064f358c-a01f-45f1-8ac8-ee2cd4bdecdf`; `/auth` 200; login, Dashboard, Importações, Lançamentos PASS; console 0 erros. Critical 0 / High 0.
 - Status: FASE 2 IMPLEMENTADA, SEGURA E TECNICAMENTE VALIDADA NO AMBIENTE PUBLICADO — AGUARDANDO HOMOLOGAÇÃO FORMAL DO RESPONSÁVEL. FASE 3 PERMANECE BLOQUEADA.
+
+---
+
+## 18. HOMOLOGAÇÃO FORMAL — FASE 2 (26/09/2026)
+
+O responsável pelo projeto registrou a **HOMOLOGAÇÃO FORMAL DA FASE 2 — IMPORTAÇÃO E GESTÃO DOS LANÇAMENTOS**.
+
+### Base técnica da homologação
+
+| Item | Resultado |
+| --- | --- |
+| SHA publicado (confirmado em `/health`) | `a8a439749ef174c2788a96c851c78f7252de558a` |
+| Deployment | `psr2.064f358c-a01f-45f1-8ac8-ee2cd4bdecdf` |
+| `/health` | PASS |
+| `/auth` | PASS |
+| Dashboard | PASS |
+| Importações | PASS |
+| Lançamentos | PASS |
+| Console | 0 erros |
+| Testes unitários (executados anteriormente) | 51/51 PASS |
+| Testes de segurança (executados anteriormente) | 76/76 PASS |
+| Último scanner de segurança | 0 Critical / 0 High |
+| Fluxo público completo da Fase 2 | Validado anteriormente |
+| Duplicidade | Validada |
+| Storage privado | Validado |
+| Experiência mobile | Validada |
+| Identificação do SHA do deployment | Corrigida |
+
+### Ressalvas registradas pelo responsável
+
+- **Não foram novamente executados** login por digitação de e-mail/senha nem o scanner de segurança após a última alteração de versionamento.
+- A homologação considera que a última alteração ficou **restrita à identificação de versão** e não modificou regras funcionais, banco, RLS/RBAC, storage, importações, lançamentos ou autenticação.
+
+### Status registrados
+
+**FASE 2 HOMOLOGADA PELO RESPONSÁVEL DO PROJETO.**
+**FASES 0, 1 E 2 HOMOLOGADAS.**
+**FASE 3 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.**
