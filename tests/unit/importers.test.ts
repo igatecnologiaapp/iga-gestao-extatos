@@ -74,7 +74,7 @@ describe("valores e datas", () => {
     expect(parseDate("20260926")).toBe("2026-09-26");
     expect(parseDate("20260926120000")).toBe("2026-09-26");
     // Serial de planilha (26/09/2026)
-    expect(parseDate(46282)).toBe("2026-09-26");
+    expect(parseDate(46291)).toBe("2026-09-26");
   });
 
   it("rejeita datas inválidas sem criar data fictícia", () => {
