@@ -574,3 +574,29 @@ Correção dos dois ajustes complementares solicitados após a homologação. Ne
 - Filtro por empresa usa o seletor de empresa existente.
 - Recomposição de limite segue regra genérica (saldos em aberto).
 - Aviso de console do React ("state update on a component that hasn't mounted yet") observado no preview, sem impacto funcional.
+
+## 21. Fase 3 — Validação final de segurança e ambiente publicado (28/09/2026)
+
+Nenhuma alteração de código, regra, RLS ou RBAC nesta rodada (sem publicação corretiva).
+
+**Segurança**
+- Scanner (nova execução sobre o estado publicado): nenhum achado — Critical 0, High 0.
+- ANON (API real, sem login): `card_invoices`, `invoice_payments`, `cards`, `transactions` → SELECT/INSERT/UPDATE/DELETE = 401 (permission denied); view `card_invoice_summary` → SELECT "permission denied" (42501), escrita impossível (view não atualizável). Falha anterior permanece corrigida.
+- Empresa A × Empresa B e RBAC: cobertos por F3-01…F3-32 e suíte anterior (consultar, criar, alterar, excluir, vincular, desvincular, pagar, cancelar; cartões, faturas, vínculos, pagamentos, lançamentos) — PASS no backend real.
+- Segurança: 108/108 PASS. Unitários: 70/70 PASS.
+
+**Ambiente publicado**
+- URL https://iga-gestao-extatos.lovable.app — `/health` SHA `47adbc9f35f0658ceaec509c3ca1ed9171be01be`, deployment `psr2.2c9c83dd-7129-4202-957f-6a8c6339b250`; `/auth` 200.
+- Login por sessão injetada da conta igatecnologia.app@gmail.com (login por digitação não reexecutado).
+
+**Fluxo Fase 3 (desktop, público, dados fictícios ZZ-F3-TESTE)**: cartão (fech. 5, venc. 15) → compra 10/09 R$ 200 → fatura 10/2026 (fechamento 04/10, vencimento 15/10, Aberta) → Fechar fatura → pagamento R$ 100 → "Parcialmente paga", Pago 100, Saldo 100 → pagamento R$ 100 → "Paga", Saldo 0,00. Aviso "Possível pagamento já existente — revisar vínculo" exibido (débito de R$ 100 na conta), sem conciliação automática. Pagamentos de Faturas lista os 2 pagamentos. Logout → /auth; relogin → /faturas.
+
+**Mobile 390×844 (público)**: Dashboard, Faturas, detalhe, Pagamentos, Cartões, Lançamentos sem rolagem horizontal; menu recolhível funcional.
+
+**Regressão Fases 0–2**: Dashboard, Instituições, Contas, Cartões, Importações, Lançamentos, menu, logout/relogin operacionais (desktop e mobile). Revisão de importação não reexecutada com novo arquivo nesta rodada.
+
+**Console/rede (público)**: 0 erros, 0 warnings, 0 HTTP 4xx/5xx inesperados. O aviso citado anteriormente ("Can't perform a React state update on a component that hasn't mounted yet") foi visto apenas no preview (modo de desenvolvimento do React, que só emite esse warning em dev); não aparece em produção. Classificação: warning de desenvolvimento, sem impacto funcional ou de segurança — risco residual conhecido, sem correção necessária.
+
+**Dados sintéticos**: removidos (contagem final 0). Registros de auditoria preservados.
+
+**FASE 3 IMPLEMENTADA, PUBLICADA E TECNICAMENTE VALIDADA — AGUARDANDO HOMOLOGAÇÃO DO RESPONSÁVEL. FASE 4 PERMANECE BLOQUEADA.**
