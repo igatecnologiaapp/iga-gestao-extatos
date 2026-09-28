@@ -432,9 +432,9 @@ async function main() {
 
   // ============ FASE 3 — Faturas e pagamentos ============
   const cardOf = async (company) =>
-    (await admin.from("cards").select("id").eq("company_id", ids[company]).single()).data.id;
+    (await admin.from("cards").select("id").eq("company_id", ids[company]).order("created_at").limit(1)).data[0].id;
   const accOf = async (company) =>
-    (await admin.from("bank_accounts").select("id").eq("company_id", ids[company]).single()).data.id;
+    (await admin.from("bank_accounts").select("id").eq("company_id", ids[company]).order("created_at").limit(1)).data[0].id;
   ids.cardAlfa = await cardOf("alfa");
   ids.cardBeta = await cardOf("beta");
   ids.accAlfa = await accOf("alfa");
