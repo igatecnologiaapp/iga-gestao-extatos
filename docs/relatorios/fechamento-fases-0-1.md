@@ -600,3 +600,25 @@ Nenhuma alteração de código, regra, RLS ou RBAC nesta rodada (sem publicaçã
 **Dados sintéticos**: removidos (contagem final 0). Registros de auditoria preservados.
 
 **FASE 3 IMPLEMENTADA, PUBLICADA E TECNICAMENTE VALIDADA — AGUARDANDO HOMOLOGAÇÃO DO RESPONSÁVEL. FASE 4 PERMANECE BLOQUEADA.**
+
+## 22. Homologação formal — Fase 3 (28/09/2026)
+
+**FASE 3 — GESTÃO DE CARTÕES E FATURAS: HOMOLOGADA PELO RESPONSÁVEL DO PROJETO.**
+
+Base da homologação (evidências da seção 21):
+- Segurança: varredura final 0 Critical / 0 High; ANON bloqueado; Empresa A × Empresa B PASS; RBAC PASS; 108/108 testes de segurança (operações no servidor: consultar, criar, alterar, excluir, vincular, desvincular, pagar, cancelar).
+- Testes automatizados: 70/70 PASS.
+- Ambiente publicado: https://iga-gestao-extatos.lovable.app — SHA `47adbc9f35f0658ceaec509c3ca1ed9171be01be`, deployment `psr2.2c9c83dd-7129-4202-957f-6a8c6339b250`.
+- Fluxo público: Cartão → Compra → Fatura → Fechamento → Pagamento parcial (R$ 200 / R$ 100 → Parcialmente paga, saldo R$ 100) → Pagamento total (Paga, saldo R$ 0,00).
+- Duplicidade: aviso "Possível pagamento já existente — revisar vínculo", sem conciliação automática nem exclusão.
+- Mobile 390×844: sem rolagem horizontal nas principais telas; menu recolhível funcionando.
+- Produção: 0 erros, 0 warnings, 0 falhas de comunicação.
+- Dados fictícios removidos; auditoria preservada.
+
+Verificações NÃO repetidas nesta rodada (registradas por fidelidade; não invalidam a homologação):
+- login por digitação de usuário/senha;
+- checagem específica de todos os filtros;
+- nova importação passando pela tela de Revisão;
+- verificação visual mobile de cada ação individual condicionada por RBAC.
+
+Status: FASES 0, 1, 2 e 3 HOMOLOGADAS. **FASE 4 — BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.** Nenhuma alteração de código, banco, RLS, RBAC ou interface nesta solicitação. Desenvolvimento parado.

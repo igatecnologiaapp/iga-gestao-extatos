@@ -2,9 +2,12 @@
 
 ## Status
 
-- **Fases 0, 1 e 2: IMPLEMENTADAS E HOMOLOGADAS** (26/09/2026).
-- **Fase 3 — Gestão de Cartões e Faturas: IMPLEMENTADA, PUBLICADA E TECNICAMENTE VALIDADA — AGUARDANDO HOMOLOGAÇÃO DO RESPONSÁVEL** (28/09/2026; validação final em produção registrada na seção 21 do relatório).
-- **Fases 4, 5 e 6: BLOQUEADAS.**
+- **FASE 0 — HOMOLOGADA**
+- **FASE 1 — HOMOLOGADA**
+- **FASE 2 — HOMOLOGADA**
+- **FASE 3 — HOMOLOGADA** (Gestão de Cartões e Faturas; homologação formal do responsável em 28/09/2026 — seção 22 do relatório).
+- **FASE 4 — BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.** Fases 5 e 6 bloqueadas.
+- Desenvolvimento PARADO aguardando autorização para a Fase 4.
 
 ## Fase 3 — tarefas
 
