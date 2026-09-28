@@ -531,8 +531,8 @@ async function main() {
   record("F3-30", "Auditoria: criação, cancelamento de fatura, pagamento e estorno", "registrados",
     has("card_invoices", "create") && has("card_invoices", "status_change") && has("invoice_payments", "create") && has("invoice_payments", "status_change"),
     JSON.stringify([...new Set((auditRows ?? []).map((r) => `${r.entity}:${r.action}`))]));
-  await count("F3-31", "Anônimo não lê faturas", () => anon.from("card_invoices").select("id"), 0);
-  await count("F3-32", "Anônimo não lê pagamentos", () => anon.from("invoice_payments").select("id"), 0);
+  await deny("F3-31", "Anônimo não lê faturas", () => anon.from("card_invoices").select("id"));
+  await deny("F3-32", "Anônimo não lê pagamentos", () => anon.from("invoice_payments").select("id"));
 
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
