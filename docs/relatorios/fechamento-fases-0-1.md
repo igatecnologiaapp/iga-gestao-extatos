@@ -622,3 +622,14 @@ Verificações NÃO repetidas nesta rodada (registradas por fidelidade; não inv
 - verificação visual mobile de cada ação individual condicionada por RBAC.
 
 Status: FASES 0, 1, 2 e 3 HOMOLOGADAS. **FASE 4 — BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.** Nenhuma alteração de código, banco, RLS, RBAC ou interface nesta solicitação. Desenvolvimento parado.
+
+## 23. Ajuste pontual — Edição do nome da instituição (28/09/2026)
+
+- Tela Cadastros → Instituições: botão "Editar" visível (texto + ícone) para quem tem `institution.update`; atualiza o MESMO registro (UPDATE por id), sem recriar/duplicar.
+- Validações: espaços extras removidos; nome vazio bloqueado ("Informe o nome da instituição."); duplicidade pela regra existente (empresa+nome único) → "Já existe uma instituição com este nome nesta empresa."; sucesso → "Instituição atualizada com sucesso."; demais telas recarregam o novo nome.
+- Sem alteração de banco, RLS, RBAC ou regras financeiras. Auditoria pelo gatilho existente (old/new, usuário, empresa, data/hora).
+- Teste (preview, dados fictícios): "Banco Teste" → "Banco Teste S.A.": mesmo id; conta e cartão continuam vinculados; tela Contas exibe o novo nome; nenhuma duplicata; auditoria `update` com nome anterior/novo, e-mail, empresa e horário. Dados removidos.
+- Segurança: novo teste INST-01 (admin da Empresa A não renomeia instituição da Empresa B) + RBAC-13 (auditor não edita) → 109/109 PASS; unitários 70/70.
+- Publicado em https://iga-gestao-extatos.lovable.app.
+
+AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA.
