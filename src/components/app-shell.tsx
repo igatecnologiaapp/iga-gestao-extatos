@@ -7,6 +7,7 @@ import {
   ChevronDown,
   CreditCard,
   FileText,
+  HandCoins,
   Landmark,
   LayoutDashboard,
   Loader2,
@@ -60,6 +61,8 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/importacoes", label: "Importações", icon: Upload, permission: "import.execute" },
       { to: "/lancamentos", label: "Lançamentos", icon: ReceiptText, permission: "transaction.view" },
+      { to: "/faturas", label: "Faturas", icon: FileText, permission: "invoice.view" },
+      { to: "/pagamentos-faturas", label: "Pagamentos de Faturas", icon: HandCoins, permission: "invoice.view" },
     ],
   },
   {
@@ -85,7 +88,6 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 const FUTURE_ITEMS = [
-  { label: "Faturas", icon: FileText, phase: "Fase 3" },
   { label: "Conciliação", icon: Scale, phase: "Fase 4" },
   { label: "Custos Financeiros", icon: TrendingDown, phase: "Fase 5" },
   { label: "Relatórios", icon: BarChart3, phase: "Fase 5" },

@@ -219,7 +219,9 @@ async function signIn(u) {
 async function cleanup() {
   for (const table of [
     "audit_log",
+    "invoice_payments",
     "transactions",
+    "card_invoices",
     "staged_transactions",
     "import_batches",
     "transaction_subcategories",
@@ -235,6 +237,7 @@ async function cleanup() {
     await admin.from("profiles").delete().eq("id", id);
     await admin.auth.admin.deleteUser(id).catch(() => {});
   }
+  for (const c of created.companies) await admin.from("audit_log").delete().eq("company_id", c);
   for (const c of created.companies) await admin.from("companies").delete().eq("id", c);
 }
 
@@ -427,6 +430,108 @@ async function main() {
   await allow("ADM-05", "Com dois administradores ativos, o primeiro pode ser rebaixado", () =>
     adminBeta.from("user_roles").update({ role: "financeiro" }).eq("user_id", users.adminBeta.id).eq("company_id", ids.beta));
 
+  // ============ FASE 3 — Faturas e pagamentos ============
+  const cardOf = async (company) =>
+    (await admin.from("cards").select("id").eq("company_id", ids[company]).single()).data.id;
+  const accOf = async (company) =>
+    (await admin.from("bank_accounts").select("id").eq("company_id", ids[company]).single()).data.id;
+  ids.cardAlfa = await cardOf("alfa");
+  ids.cardBeta = await cardOf("beta");
+  ids.accAlfa = await accOf("alfa");
+  ids.accBeta = await accOf("beta");
+  const inv = (company, card, competence = "2026-09-01") => ({
+    company_id: ids[company], card_id: card, competence,
+    period_start: "2026-08-10", closing_date: "2026-09-10", due_date: "2026-09-20",
+  });
+  const finAlfaC = await signIn(users.finAlfa);
+  const conAlfaC = await signIn(users.conAlfa);
+  const audAlfaC = await signIn(users.audAlfa);
+  const adminBetaC = await signIn(users.adminBeta);
+  const { data: betaInv } = await admin.from("card_invoices").insert(inv("beta", ids.cardBeta)).select("id").single();
+  ids.invBeta = betaInv.id;
+
+  await allow("F3-01", "Financeiro cria fatura na própria empresa", () =>
+    finAlfaC.from("card_invoices").insert(inv("alfa", ids.cardAlfa)));
+  const { data: alfaInv } = await admin.from("card_invoices").select("id").eq("card_id", ids.cardAlfa).single();
+  ids.invAlfa = alfaInv.id;
+  await deny("F3-02", "Fatura duplicada (mesmo cartão e competência) é bloqueada", () =>
+    finAlfaC.from("card_invoices").insert(inv("alfa", ids.cardAlfa)).select());
+  await count("F3-03", "Empresa A não visualiza faturas da Empresa B (SELECT)", () =>
+    finAlfaC.from("card_invoices").select("id").eq("id", ids.invBeta), 0);
+  await deny("F3-04", "Empresa A não cria fatura na Empresa B (INSERT)", () =>
+    finAlfaC.from("card_invoices").insert(inv("beta", ids.cardBeta, "2026-10-01")).select());
+  await deny("F3-05", "Empresa A não usa cartão da Empresa B na própria fatura", () =>
+    finAlfaC.from("card_invoices").insert(inv("alfa", ids.cardBeta, "2026-11-01")).select());
+  await deny("F3-06", "Empresa A não altera fatura da Empresa B (UPDATE)", () =>
+    finAlfaC.from("card_invoices").update({ status: "cancelada" }).eq("id", ids.invBeta).select());
+  await deny("F3-07", "Exclusão de fatura é negada (DELETE)", () =>
+    finAlfaC.from("card_invoices").delete().eq("id", ids.invAlfa).select());
+  await deny("F3-08", "Consulta não cria fatura (RBAC)", () =>
+    conAlfaC.from("card_invoices").insert(inv("alfa", ids.cardAlfa, "2026-12-01")).select());
+  await count("F3-09", "Auditor visualiza faturas da própria empresa", () =>
+    audAlfaC.from("card_invoices").select("id").eq("id", ids.invAlfa), 1);
+
+  const pay = (company, invoice, extra = {}) => ({
+    company_id: ids[company], invoice_id: invoice, paid_at: "2026-09-15", amount: 300,
+    idempotency_key: crypto.randomUUID(), ...extra,
+  });
+  const key = crypto.randomUUID();
+  await allow("F3-10", "Financeiro registra pagamento parcial", () =>
+    finAlfaC.from("invoice_payments").insert(pay("alfa", ids.invAlfa, { idempotency_key: key, account_id: ids.accAlfa })));
+  await deny("F3-11", "Reenvio do mesmo pagamento (idempotência) não duplica", () =>
+    finAlfaC.from("invoice_payments").insert(pay("alfa", ids.invAlfa, { idempotency_key: key })).select());
+  await deny("F3-12", "Pagamento com conta de outra empresa é negado", () =>
+    finAlfaC.from("invoice_payments").insert(pay("alfa", ids.invAlfa, { account_id: ids.accBeta })).select());
+  await deny("F3-13", "Empresa A não paga fatura da Empresa B", () =>
+    finAlfaC.from("invoice_payments").insert(pay("beta", ids.invBeta)).select());
+  await deny("F3-14", "Consulta não registra pagamento (RBAC)", () =>
+    conAlfaC.from("invoice_payments").insert(pay("alfa", ids.invAlfa)).select());
+  await deny("F3-15", "Valor de pagamento registrado é imutável", () =>
+    finAlfaC.from("invoice_payments").update({ amount: 1 }).eq("idempotency_key", key).select());
+  await deny("F3-16", "Exclusão de pagamento é negada (DELETE)", () =>
+    finAlfaC.from("invoice_payments").delete().eq("idempotency_key", key).select());
+  await count("F3-17", "Empresa B não visualiza pagamentos da Empresa A", () =>
+    adminBetaC.from("invoice_payments").select("id").eq("idempotency_key", key), 0);
+  await count("F3-18", "Resumo consolidado da Empresa A invisível para Empresa B", () =>
+    adminBetaC.from("card_invoice_summary").select("invoice_id").eq("invoice_id", ids.invAlfa), 0);
+  const { data: sumA } = await finAlfaC.from("card_invoice_summary").select("paid").eq("invoice_id", ids.invAlfa).single();
+  record("F3-19", "Resumo reflete valor pago (300,00)", "= 300", Number(sumA?.paid) === 300, `obtido: ${sumA?.paid}`);
+
+  const tx = (extra) => ({
+    company_id: ids.alfa, source_type: "cartao", card_id: ids.cardAlfa, posted_at: "2026-09-01",
+    description: "Compra QA", normalized_description: "compra qa", amount: 50, direction: "saida", origin: "manual", ...extra,
+  });
+  await allow("F3-20", "Lançamento vinculado à fatura do mesmo cartão", () =>
+    finAlfaC.from("transactions").insert(tx({ invoice_id: ids.invAlfa })));
+  await deny("F3-21", "Lançamento não pode apontar fatura de outra empresa", () =>
+    finAlfaC.from("transactions").insert(tx({ invoice_id: ids.invBeta })).select());
+  await deny("F3-22", "Lançamento sem o cartão da fatura é rejeitado", () =>
+    finAlfaC.from("transactions").insert(tx({ card_id: null, source_type: "conta", invoice_id: ids.invAlfa })).select());
+  const grp = crypto.randomUUID();
+  await allow("F3-23", "Parcela 01/03 registrada", () =>
+    finAlfaC.from("transactions").insert(tx({ installment_group: grp, installment_number: 1, installment_total: 3 })));
+  await deny("F3-24", "Parcela duplicada no mesmo parcelamento é bloqueada", () =>
+    finAlfaC.from("transactions").insert(tx({ installment_group: grp, installment_number: 1, installment_total: 3 })).select());
+  await deny("F3-25", "Parcela impossível (4/3) é rejeitada", () =>
+    finAlfaC.from("transactions").insert(tx({ installment_number: 4, installment_total: 3 })).select());
+  const { data: sumA2 } = await finAlfaC.from("card_invoice_summary").select("total").eq("invoice_id", ids.invAlfa).single();
+  record("F3-26", "Total da fatura consolida lançamentos vinculados (50,00)", "= 50", Number(sumA2?.total) === 50, `obtido: ${sumA2?.total}`);
+
+  await allow("F3-27", "Pagamento estornado (status inativo, sem exclusão)", () =>
+    finAlfaC.from("invoice_payments").update({ status: "inativo" }).eq("idempotency_key", key));
+  await allow("F3-28", "Fatura cancelada pelo financeiro", () =>
+    finAlfaC.from("card_invoices").update({ status: "cancelada" }).eq("id", ids.invAlfa));
+  await deny("F3-29", "Fatura cancelada não aceita pagamento", () =>
+    finAlfaC.from("invoice_payments").insert(pay("alfa", ids.invAlfa)).select());
+  const { data: auditRows } = await admin.from("audit_log").select("entity, action")
+    .eq("company_id", ids.alfa).in("entity", ["card_invoices", "invoice_payments"]);
+  const has = (e, a) => (auditRows ?? []).some((r) => r.entity === e && r.action === a);
+  record("F3-30", "Auditoria: criação, cancelamento de fatura, pagamento e estorno", "registrados",
+    has("card_invoices", "create") && has("card_invoices", "status_change") && has("invoice_payments", "create") && has("invoice_payments", "status_change"),
+    JSON.stringify([...new Set((auditRows ?? []).map((r) => `${r.entity}:${r.action}`))]));
+  await count("F3-31", "Anônimo não lê faturas", () => anon.from("card_invoices").select("id"), 0);
+  await count("F3-32", "Anônimo não lê pagamentos", () => anon.from("invoice_payments").select("id"), 0);
+
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
     ["PRIV-01", "has_permission", { _company: ids.alfa, _permission: "audit.view" }],
@@ -461,7 +566,7 @@ try {
 }
 
 const pad = (s, n) => String(s).padEnd(n);
-console.log("\n============== TESTES DE SEGURANÇA — FASES 0 E 1 ==============\n");
+console.log("\n============== TESTES DE SEGURANÇA — FASES 0 A 3 ==============\n");
 for (const r of results) {
   const mark = r.status === "PASS" ? "✔" : "✘";
   console.log(`${mark} ${pad(r.id, 9)} ${pad(r.scenario, 62)} ${r.status}`);
