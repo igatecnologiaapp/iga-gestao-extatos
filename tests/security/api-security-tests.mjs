@@ -369,6 +369,8 @@ async function main() {
     audAlfa.from("cards").insert({ company_id: ids.alfa, nickname: "Cartão Auditor" }).select());
   await deny("RBAC-13", "Perfil Auditor não edita instituições", () =>
     audAlfa.from("financial_institutions").update({ name: "alterado" }).eq("company_id", ids.alfa).select());
+  await deny("INST-01", "Administrador da Alfa não renomeia instituição da Empresa Beta", () =>
+    adminAlfa.from("financial_institutions").update({ name: "renomeada QA" }).eq("company_id", ids.beta).select());
   await atLeast("RBAC-14", "Perfil Auditor vê a trilha de auditoria da própria empresa", () =>
     audAlfa.from("audit_log").select("id").eq("company_id", ids.alfa), 1);
   await count("RBAC-15", "Perfil Auditor não vê a trilha de auditoria da Empresa Beta", () =>
