@@ -736,7 +736,10 @@ function DueDialog({ invoice, onClose, onDone }: { invoice: CardInvoice; onClose
     setSaving(true);
     const { error } = await supabase.from("card_invoices").update({ due_date: due }).eq("id", invoice.id);
     setSaving(false);
-    if (error) return toast.error(friendlyInvoiceError(error));
+    if (error) {
+      toast.error(friendlyInvoiceError(error));
+      return;
+    }
     toast.success("Vencimento alterado.");
     await onDone();
     onClose();

@@ -122,7 +122,7 @@ export async function autoAssignCardTransactions(card: CardLike, userId: string 
         updated_by: userId,
       };
       if (inst) {
-        const [n, t] = inst.split("/").map(Number);
+        const [n = 0, t = 0] = inst.split("/").map(Number);
         patch.installment_number = n;
         patch.installment_total = t;
       }
@@ -232,7 +232,7 @@ export async function createInstallmentPurchase(input: InstallmentInput): Promis
       posted_at: postedAt,
       description: desc,
       normalized_description: normalizeDescription(desc),
-      amount: values[i - 1],
+      amount: values[i - 1] ?? 0,
       direction: "saida",
       category_id: categoryId,
       origin: "manual",
@@ -246,7 +246,7 @@ export async function createInstallmentPurchase(input: InstallmentInput): Promis
         companyId: card.company_id,
         cardId: card.id,
         postedAt,
-        amount: values[i - 1],
+        amount: values[i - 1] ?? 0,
         direction: "saida",
         description: desc,
       }),

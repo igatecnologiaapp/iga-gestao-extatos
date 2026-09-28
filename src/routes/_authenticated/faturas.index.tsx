@@ -73,7 +73,7 @@ function InvoicesContent({ company }: { company: Company }) {
   const [instOpen, setInstOpen] = useState(false);
 
   const today = todayIso();
-  const cards = cardsQuery.data ?? [];
+  const cards = useMemo(() => cardsQuery.data ?? [], [cardsQuery.data]);
   const cardById = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards]);
   const invoices: InvoiceView[] = useMemo(
     () =>
