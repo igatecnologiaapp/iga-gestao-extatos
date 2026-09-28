@@ -38,7 +38,8 @@ describe("competência da fatura", () => {
   it("fevereiro sem dia 31 e ano bissexto", () => {
     expect(cycleForPurchase("2026-02-10", 31, 10).closingDate).toBe("2026-02-28");
     expect(cycleForPurchase("2028-02-10", 31, 10).closingDate).toBe("2028-02-29");
-    expect(cycleForPurchase("2026-02-28", 30, 10).competence).toBe("2026-03-01");
+    // 28/02 é o fechamento (30 limitado a 28) → próxima fatura: fecha 30/03, vence 10/04
+    expect(cycleForPurchase("2026-02-28", 30, 10).competence).toBe("2026-04-01");
     expect(cycleForPurchase("2026-01-15", 5, 30).dueDate).toBe("2026-02-28");
   });
   it("ciclo por competência é consistente com ciclo por compra", () => {
