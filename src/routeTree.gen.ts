@@ -23,6 +23,7 @@ import { Route as AuthenticatedInstituicoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AuthenticatedFaturasIndexRouteImport } from './routes/_authenticated/faturas.index'
 import { Route as AuthenticatedImportacoesIndexRouteImport } from './routes/_authenticated/importacoes.index'
 import { Route as AuthenticatedImportacoesIdRouteImport } from './routes/_authenticated/importacoes.$id'
 
@@ -98,6 +99,12 @@ const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFaturasIndexRoute =
+  AuthenticatedFaturasIndexRouteImport.update({
+    id: '/faturas/',
+    path: '/faturas/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedImportacoesIndexRoute =
   AuthenticatedImportacoesIndexRouteImport.update({
     id: '/importacoes/',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
+  '/faturas/': typeof AuthenticatedFaturasIndexRoute
   '/importacoes/': typeof AuthenticatedImportacoesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
+  '/faturas': typeof AuthenticatedFaturasIndexRoute
   '/importacoes': typeof AuthenticatedImportacoesIndexRoute
 }
 export interface FileRoutesById {
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
+  '/_authenticated/faturas/': typeof AuthenticatedFaturasIndexRoute
   '/_authenticated/importacoes/': typeof AuthenticatedImportacoesIndexRoute
 }
 export interface FileRouteTypes {
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/usuarios'
     | '/importacoes/$id'
+    | '/faturas/'
     | '/importacoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/'
     | '/importacoes/$id'
+    | '/faturas'
     | '/importacoes'
   id:
     | '__root__'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios'
     | '/_authenticated/'
     | '/_authenticated/importacoes/$id'
+    | '/_authenticated/faturas/'
     | '/_authenticated/importacoes/'
   fileRoutesById: FileRoutesById
 }
@@ -326,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/faturas/': {
+      id: '/_authenticated/faturas/'
+      path: '/faturas'
+      fullPath: '/faturas/'
+      preLoaderRoute: typeof AuthenticatedFaturasIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/importacoes/': {
       id: '/_authenticated/importacoes/'
       path: '/importacoes'
@@ -355,6 +375,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedImportacoesIdRoute: typeof AuthenticatedImportacoesIdRoute
+  AuthenticatedFaturasIndexRoute: typeof AuthenticatedFaturasIndexRoute
   AuthenticatedImportacoesIndexRoute: typeof AuthenticatedImportacoesIndexRoute
 }
 
@@ -370,6 +391,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedImportacoesIdRoute: AuthenticatedImportacoesIdRoute,
+  AuthenticatedFaturasIndexRoute: AuthenticatedFaturasIndexRoute,
   AuthenticatedImportacoesIndexRoute: AuthenticatedImportacoesIndexRoute,
 }
 
