@@ -24,6 +24,7 @@ import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedFaturasIndexRouteImport } from './routes/_authenticated/faturas.index'
+import { Route as AuthenticatedFaturasIdRouteImport } from './routes/_authenticated/faturas.$id'
 import { Route as AuthenticatedImportacoesIndexRouteImport } from './routes/_authenticated/importacoes.index'
 import { Route as AuthenticatedImportacoesIdRouteImport } from './routes/_authenticated/importacoes.$id'
 
@@ -105,6 +106,11 @@ const AuthenticatedFaturasIndexRoute =
     path: '/faturas/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFaturasIdRoute = AuthenticatedFaturasIdRouteImport.update({
+  id: '/faturas/$id',
+  path: '/faturas/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedImportacoesIndexRoute =
   AuthenticatedImportacoesIndexRouteImport.update({
     id: '/importacoes/',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/faturas/$id': typeof AuthenticatedFaturasIdRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
   '/faturas/': typeof AuthenticatedFaturasIndexRoute
   '/importacoes/': typeof AuthenticatedImportacoesIndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
+  '/faturas/$id': typeof AuthenticatedFaturasIdRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
   '/faturas': typeof AuthenticatedFaturasIndexRoute
   '/importacoes': typeof AuthenticatedImportacoesIndexRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/faturas/$id': typeof AuthenticatedFaturasIdRoute
   '/_authenticated/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
   '/_authenticated/faturas/': typeof AuthenticatedFaturasIndexRoute
   '/_authenticated/importacoes/': typeof AuthenticatedImportacoesIndexRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/lancamentos'
     | '/onboarding'
     | '/usuarios'
+    | '/faturas/$id'
     | '/importacoes/$id'
     | '/faturas/'
     | '/importacoes/'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/usuarios'
     | '/'
+    | '/faturas/$id'
     | '/importacoes/$id'
     | '/faturas'
     | '/importacoes'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
+    | '/_authenticated/faturas/$id'
     | '/_authenticated/importacoes/$id'
     | '/_authenticated/faturas/'
     | '/_authenticated/importacoes/'
@@ -346,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFaturasIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/faturas/$id': {
+      id: '/_authenticated/faturas/$id'
+      path: '/faturas/$id'
+      fullPath: '/faturas/$id'
+      preLoaderRoute: typeof AuthenticatedFaturasIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/importacoes/': {
       id: '/_authenticated/importacoes/'
       path: '/importacoes'
@@ -374,6 +393,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedFaturasIdRoute: typeof AuthenticatedFaturasIdRoute
   AuthenticatedImportacoesIdRoute: typeof AuthenticatedImportacoesIdRoute
   AuthenticatedFaturasIndexRoute: typeof AuthenticatedFaturasIndexRoute
   AuthenticatedImportacoesIndexRoute: typeof AuthenticatedImportacoesIndexRoute
@@ -390,6 +410,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedFaturasIdRoute: AuthenticatedFaturasIdRoute,
   AuthenticatedImportacoesIdRoute: AuthenticatedImportacoesIdRoute,
   AuthenticatedFaturasIndexRoute: AuthenticatedFaturasIndexRoute,
   AuthenticatedImportacoesIndexRoute: AuthenticatedImportacoesIndexRoute,

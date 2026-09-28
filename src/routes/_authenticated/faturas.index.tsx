@@ -16,7 +16,6 @@ import {
   formatCompetence,
   INVOICE_STATUS_LABELS,
   todayIso,
-  type InvoiceDisplayStatus,
 } from "@/lib/invoices";
 import {
   autoAssignCardTransactions,
@@ -613,4 +612,3 @@ function InstallmentDialog({
   );
 }
 
-export type { InvoiceDisplayStatus };
