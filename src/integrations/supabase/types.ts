@@ -127,8 +127,69 @@ export type Database = {
           },
         ]
       }
+      card_invoices: {
+        Row: {
+          card_id: string
+          closing_date: string
+          company_id: string
+          competence: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          notes: string | null
+          period_start: string
+          status: Database["public"]["Enums"]["invoice_lifecycle"]
+          updated_at: string
+        }
+        Insert: {
+          card_id: string
+          closing_date: string
+          company_id: string
+          competence: string
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          id?: string
+          notes?: string | null
+          period_start: string
+          status?: Database["public"]["Enums"]["invoice_lifecycle"]
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string
+          closing_date?: string
+          company_id?: string
+          competence?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          notes?: string | null
+          period_start?: string
+          status?: Database["public"]["Enums"]["invoice_lifecycle"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_invoices_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
+          account_id: string | null
           administrator_id: string | null
           brand: string | null
           closing_day: number | null
@@ -147,6 +208,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_id?: string | null
           administrator_id?: string | null
           brand?: string | null
           closing_day?: number | null
@@ -165,6 +227,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_id?: string | null
           administrator_id?: string | null
           brand?: string | null
           closing_day?: number | null
@@ -183,6 +246,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cards_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cards_administrator_id_fkey"
             columns: ["administrator_id"]
@@ -387,6 +457,90 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "financial_institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_payments: {
+        Row: {
+          account_id: string | null
+          amount: number
+          bank_transaction_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          idempotency_key: string
+          invoice_id: string
+          notes: string | null
+          paid_at: string
+          status: Database["public"]["Enums"]["record_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          bank_transaction_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          idempotency_key: string
+          invoice_id: string
+          notes?: string | null
+          paid_at: string
+          status?: Database["public"]["Enums"]["record_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          bank_transaction_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          idempotency_key?: string
+          invoice_id?: string
+          notes?: string | null
+          paid_at?: string
+          status?: Database["public"]["Enums"]["record_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "card_invoice_summary"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "card_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -647,6 +801,7 @@ export type Database = {
           amount: number
           card_id: string | null
           category_id: string | null
+          charge_kind: Database["public"]["Enums"]["card_charge_kind"] | null
           company_id: string
           created_at: string
           created_by: string | null
@@ -656,7 +811,12 @@ export type Database = {
           fingerprint: string | null
           id: string
           import_id: string | null
+          installment_group: string | null
+          installment_number: number | null
+          installment_total: number | null
+          installment_total_amount: number | null
           institution_id: string | null
+          invoice_id: string | null
           normalized_description: string
           notes: string | null
           origin: Database["public"]["Enums"]["transaction_origin"]
@@ -673,6 +833,7 @@ export type Database = {
           amount: number
           card_id?: string | null
           category_id?: string | null
+          charge_kind?: Database["public"]["Enums"]["card_charge_kind"] | null
           company_id: string
           created_at?: string
           created_by?: string | null
@@ -682,7 +843,12 @@ export type Database = {
           fingerprint?: string | null
           id?: string
           import_id?: string | null
+          installment_group?: string | null
+          installment_number?: number | null
+          installment_total?: number | null
+          installment_total_amount?: number | null
           institution_id?: string | null
+          invoice_id?: string | null
           normalized_description?: string
           notes?: string | null
           origin?: Database["public"]["Enums"]["transaction_origin"]
@@ -699,6 +865,7 @@ export type Database = {
           amount?: number
           card_id?: string | null
           category_id?: string | null
+          charge_kind?: Database["public"]["Enums"]["card_charge_kind"] | null
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -708,7 +875,12 @@ export type Database = {
           fingerprint?: string | null
           id?: string
           import_id?: string | null
+          installment_group?: string | null
+          installment_number?: number | null
+          installment_total?: number | null
+          installment_total_amount?: number | null
           institution_id?: string | null
+          invoice_id?: string | null
           normalized_description?: string
           notes?: string | null
           origin?: Database["public"]["Enums"]["transaction_origin"]
@@ -764,6 +936,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "card_invoice_summary"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "card_invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transactions_subcategory_id_fkey"
             columns: ["subcategory_id"]
             isOneToOne: false
@@ -812,7 +998,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      card_invoice_summary: {
+        Row: {
+          adjustments: number | null
+          card_id: string | null
+          charges: number | null
+          company_id: string | null
+          credits: number | null
+          fees: number | null
+          interest: number | null
+          invoice_id: string | null
+          paid: number | null
+          payment_lines: number | null
+          purchases: number | null
+          refunds: number | null
+          total: number | null
+          transaction_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_invoices_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
@@ -825,6 +1044,16 @@ export type Database = {
         | "investimento"
         | "outra"
       app_role: "admin" | "financeiro" | "consulta" | "auditor"
+      card_charge_kind:
+        | "compra"
+        | "juros"
+        | "encargo"
+        | "tarifa"
+        | "ajuste"
+        | "credito"
+        | "estorno"
+        | "devolucao"
+        | "pagamento"
       card_status: "ativo" | "bloqueado" | "cancelado" | "inativo"
       card_type: "credito" | "debito" | "credito_debito"
       duplicate_flag: "nenhuma" | "possivel" | "confirmada" | "ignorada"
@@ -844,6 +1073,7 @@ export type Database = {
         | "administradora_cartao"
         | "instituicao_pagamento"
         | "outra"
+      invoice_lifecycle: "aberta" | "fechada" | "cancelada"
       record_status: "ativo" | "inativo"
       staged_status: "pendente" | "confirmado" | "descartado"
       transaction_direction: "entrada" | "saida"
@@ -983,6 +1213,17 @@ export const Constants = {
         "outra",
       ],
       app_role: ["admin", "financeiro", "consulta", "auditor"],
+      card_charge_kind: [
+        "compra",
+        "juros",
+        "encargo",
+        "tarifa",
+        "ajuste",
+        "credito",
+        "estorno",
+        "devolucao",
+        "pagamento",
+      ],
       card_status: ["ativo", "bloqueado", "cancelado", "inativo"],
       card_type: ["credito", "debito", "credito_debito"],
       duplicate_flag: ["nenhuma", "possivel", "confirmada", "ignorada"],
@@ -1004,6 +1245,7 @@ export const Constants = {
         "instituicao_pagamento",
         "outra",
       ],
+      invoice_lifecycle: ["aberta", "fechada", "cancelada"],
       record_status: ["ativo", "inativo"],
       staged_status: ["pendente", "confirmado", "descartado"],
       transaction_direction: ["entrada", "saida"],
