@@ -116,20 +116,26 @@ function InstitutionsContent({ company }: { company: Company }) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    const name = form.name.trim().replace(/\s+/g, " ");
+    const code = form.code.trim() || null;
+    if (!name) {
+      toast.error("Informe o nome da instituição.");
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
         const { error } = await supabase
           .from("financial_institutions")
-          .update({ code: form.code || null, name: form.name, type: form.type })
+          .update({ code, name, type: form.type })
           .eq("id", editing.id);
         if (error) throw error;
-        toast.success("Instituição atualizada.");
+        toast.success("Instituição atualizada com sucesso.");
       } else {
         const { error } = await supabase.from("financial_institutions").insert({
           company_id: company.id,
-          code: form.code || null,
-          name: form.name,
+          code,
+          name,
           type: form.type,
           created_by: user?.id ?? null,
         });
@@ -138,9 +144,15 @@ function InstitutionsContent({ company }: { company: Company }) {
       }
       await queryClient.invalidateQueries({ queryKey: ["institutions", company.id] });
       await queryClient.invalidateQueries({ queryKey: ["count"] });
+      await queryClient.invalidateQueries();
       setDialogOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
+      const e2 = err as { code?: string; message?: string };
+      if (e2?.code === "23505") {
+        toast.error("Já existe uma instituição com este nome nesta empresa.");
+      } else {
+        toast.error(e2?.message ?? "Falha ao salvar.");
+      }
     } finally {
       setSaving(false);
     }
@@ -237,11 +249,11 @@ function InstitutionsContent({ company }: { company: Company }) {
                       <div className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => openEdit(institution)}
                           aria-label="Editar"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="mr-1 h-4 w-4" /> Editar
                         </Button>
                         <Button
                           variant="ghost"
