@@ -521,3 +521,56 @@ Correção dos dois ajustes complementares solicitados após a homologação. Ne
 | `/health` / `/auth` | PASS / 200 |
 
 **Status: FASES 0, 1 E 2 PERMANECEM HOMOLOGADAS. CORREÇÃO COMPLEMENTAR IMPLEMENTADA, TESTADA E PUBLICADA. FASE 3 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.**
+
+---
+
+## 20. Fase 3 — Gestão de Cartões e Faturas (28/09/2026)
+
+**Status: FASE 3 IMPLEMENTADA E TECNICAMENTE VALIDADA — AGUARDANDO HOMOLOGAÇÃO DO RESPONSÁVEL. FASE 4 PERMANECE BLOQUEADA.**
+
+### Estruturas criadas/alteradas
+- Migrations: `drizzle/migrations/0003_phase3_card_invoices.sql`, `0004_phase3_revoke_anon.sql`.
+- `cards.account_id` (conta relacionada, opcional).
+- `card_invoices` (empresa, cartão, competência, abertura, fechamento, vencimento, ciclo de vida aberta/fechada/cancelada); única por (cartão, competência).
+- `invoice_payments` (data, valor, conta, vínculo opcional a débito do extrato, observação, responsável, chave de idempotência; estorno = status inativo, sem exclusão; valor imutável).
+- `transactions`: `invoice_id`, `charge_kind` (compra, juros, encargo, tarifa, ajuste, crédito, estorno, devolução, pagamento), `installment_number/total/group/total_amount`.
+- View `card_invoice_summary` (security_invoker) consolida compras, juros, encargos, tarifas, ajustes, créditos, estornos, total e pago.
+- Permissões novas: `invoice.view` (todos os papéis), `invoice.manage` e `invoice.pay` (admin, financeiro).
+
+### Regras de competência (`src/lib/invoices.ts`)
+- Fechamento do mês = min(dia de fechamento, último dia do mês) — nunca cria datas impossíveis (fev/bissexto tratados).
+- Compra antes do fechamento → fatura corrente; no dia do fechamento ou depois → próxima.
+- Vencimento no mesmo mês se dia venc. > dia fech.; senão no mês seguinte (dezembro→janeiro tratado).
+- Competência = mês do vencimento. Período = [fechamento anterior, fechamento − 1].
+- Status exibido derivado dos dados: Cancelada > Paga > Vencida > Parcialmente paga > Fechada > Aberta.
+- Sinalização: verde normal; amarelo dentro de `companies.dias_alerta_vencimento`; vermelho vencida com saldo.
+- Limite: Disponível = limite total − saldos em aberto das faturas (sem regras específicas de bancos).
+
+### Parcelamento
+- Compra parcelada gera uma parcela por fatura (competência inicial + i), valores divididos em centavos.
+- Parcelas já importadas (mesma descrição base, nº e total) não são recriadas; reenvio bloqueado por índice único (grupo, nº).
+- Parcelas importadas com "PARC 03/10"/"Parcela 3 de 10" são reconhecidas na associação.
+
+### Integração com lançamentos e pagamentos
+- "Associar lançamentos às faturas" preenche apenas o vínculo dos lançamentos do cartão sem fatura (idempotente, sem duplicar).
+- Vínculo/desvínculo manual com sugestão pelo período; natureza editável.
+- Linhas "pagamento" vindas da fatura não entram no total (evita duplicidade com o pagamento registrado).
+- Pagamento com conta: busca débitos de mesmo valor ±5 dias e exibe "Possível pagamento já existente — revisar vínculo"; não exclui nem concilia (Fase 4).
+
+### Segurança e auditoria
+- RLS por `company_id` com `private.is_company_member` / `private.has_permission`; sem DELETE; anônimo sem acesso.
+- Triggers garantem cartão, conta, fatura e lançamento da mesma empresa; lançamento só vincula à fatura do mesmo cartão; fatura cancelada não aceita vínculo/pagamento.
+- `log_audit` registra criação, fechamento/reabertura/cancelamento (status_change), alteração de vencimento, pagamento, estorno e vínculos (via auditoria de lançamentos).
+
+### Testes
+- Unitários: 70/70 PASS (17 novos: competência, virada de mês, dez/jan, fevereiro, bissexto, status, vencimento, limites, créditos/estornos, parcelas, possível pagamento).
+- Segurança: 108/108 PASS (32 novos F3-01…F3-32: A×B SELECT/INSERT/UPDATE/DELETE, RBAC, idempotência, parcela duplicada, auditoria, anônimo). Ajuste no roteiro: papel Consulta restaurado antes da Fase 3 (AUD-07 o promove).
+- Achado corrigido durante os testes: novas tabelas tinham privilégios padrão para anônimo → revogados (0004).
+- E2E (desktop e 390×844): associação automática (compra de 12/09 → fatura 10/2026; demais → 09/2026, total 249,90 = 320 + 49,90 − 120), pagamento parcial 100 → "Parcialmente paga", saldo 100; Pagamentos de Faturas; menu recolhível. Dados sintéticos removidos.
+- Regressão: typecheck e lint sem erros; testes das Fases 0–2 PASS.
+
+### Limitações conhecidas
+- Não há conciliação: vínculo de pagamento a débito é apenas referência.
+- Filtro por empresa usa o seletor de empresa existente.
+- Recomposição de limite segue regra genérica (saldos em aberto).
+- Aviso de console do React ("state update on a component that hasn't mounted yet") observado no preview, sem impacto funcional.
