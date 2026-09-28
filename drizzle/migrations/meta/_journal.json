@@ -29,6 +29,13 @@
       "when": 1790583275568,
       "tag": "0003_phase3_card_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790583895334,
+      "tag": "0004_phase3_revoke_anon",
+      "breakpoints": true
     }
   ]
 }

@@ -443,6 +443,8 @@ async function main() {
     company_id: ids[company], card_id: card, competence,
     period_start: "2026-08-10", closing_date: "2026-09-10", due_date: "2026-09-20",
   });
+  // AUD-07 promove conAlfa a financeiro; restaura o papel Consulta para os cenários RBAC da Fase 3.
+  await admin.from("user_roles").update({ role: "consulta" }).eq("user_id", users.conAlfa.id).eq("company_id", ids.alfa);
   const finAlfaC = await signIn(users.finAlfa);
   const conAlfaC = await signIn(users.conAlfa);
   const audAlfaC = await signIn(users.audAlfa);
