@@ -185,7 +185,6 @@ export function deriveInvoiceStatus(input: {
   const balance = round2(total - paid);
   const closed = lifecycle === "fechada" || today >= closingDate;
   if (paid > 0 && balance <= 0) return "paga";
-  if (closed && total <= 0 && paid === 0) return today > dueDate ? "paga" : "fechada";
   if (today > dueDate && balance > 0) return "vencida";
   if (paid > 0) return "parcialmente_paga";
   return closed ? "fechada" : "aberta";
