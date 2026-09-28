@@ -432,9 +432,9 @@ async function main() {
 
   // ============ FASE 3 — Faturas e pagamentos ============
   const cardOf = async (company) =>
-    (await admin.from("cards").select("id").eq("company_id", ids[company]).single()).data.id;
+    (await admin.from("cards").select("id").eq("company_id", ids[company]).order("created_at").limit(1)).data[0].id;
   const accOf = async (company) =>
-    (await admin.from("bank_accounts").select("id").eq("company_id", ids[company]).single()).data.id;
+    (await admin.from("bank_accounts").select("id").eq("company_id", ids[company]).order("created_at").limit(1)).data[0].id;
   ids.cardAlfa = await cardOf("alfa");
   ids.cardBeta = await cardOf("beta");
   ids.accAlfa = await accOf("alfa");
@@ -443,6 +443,8 @@ async function main() {
     company_id: ids[company], card_id: card, competence,
     period_start: "2026-08-10", closing_date: "2026-09-10", due_date: "2026-09-20",
   });
+  // AUD-07 promove conAlfa a financeiro; restaura o papel Consulta para os cenários RBAC da Fase 3.
+  await admin.from("user_roles").update({ role: "consulta" }).eq("user_id", users.conAlfa.id).eq("company_id", ids.alfa);
   const finAlfaC = await signIn(users.finAlfa);
   const conAlfaC = await signIn(users.conAlfa);
   const audAlfaC = await signIn(users.audAlfa);
@@ -529,8 +531,8 @@ async function main() {
   record("F3-30", "Auditoria: criação, cancelamento de fatura, pagamento e estorno", "registrados",
     has("card_invoices", "create") && has("card_invoices", "status_change") && has("invoice_payments", "create") && has("invoice_payments", "status_change"),
     JSON.stringify([...new Set((auditRows ?? []).map((r) => `${r.entity}:${r.action}`))]));
-  await count("F3-31", "Anônimo não lê faturas", () => anon.from("card_invoices").select("id"), 0);
-  await count("F3-32", "Anônimo não lê pagamentos", () => anon.from("invoice_payments").select("id"), 0);
+  await deny("F3-31", "Anônimo não lê faturas", () => anon.from("card_invoices").select("id"));
+  await deny("F3-32", "Anônimo não lê pagamentos", () => anon.from("invoice_payments").select("id"));
 
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
