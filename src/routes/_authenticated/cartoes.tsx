@@ -63,6 +63,7 @@ type FormState = {
   brand: string;
   institution_id: string;
   administrator_id: string;
+  account_id: string;
   holder: string;
   last_four_digits: string;
   closing_day: string;
@@ -105,6 +106,20 @@ function CardsContent({ company }: { company: Company }) {
     },
   });
 
+  const { data: accounts } = useQuery({
+    queryKey: ["accounts-active", company.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bank_accounts")
+        .select("id, nickname, account_number")
+        .eq("company_id", company.id)
+        .eq("status", "ativo")
+        .order("nickname");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: cards, isLoading } = useQuery({
     queryKey: ["cards", company.id],
     queryFn: async () => {
@@ -137,6 +152,7 @@ function CardsContent({ company }: { company: Company }) {
       brand: "",
       institution_id: "",
       administrator_id: "",
+      account_id: "",
       holder: "",
       last_four_digits: "",
       closing_day: "",
@@ -160,6 +176,7 @@ function CardsContent({ company }: { company: Company }) {
       brand: card.brand ?? "",
       institution_id: card.institution_id ?? "",
       administrator_id: card.administrator_id ?? "",
+      account_id: card.account_id ?? "",
       holder: card.holder ?? "",
       last_four_digits: card.last_four_digits ?? "",
       closing_day: card.closing_day?.toString() ?? "",
@@ -177,6 +194,12 @@ function CardsContent({ company }: { company: Company }) {
       toast.error("Informe apenas os 4 dígitos finais do cartão.");
       return;
     }
+    for (const [label, v] of [["fechamento", form.closing_day], ["vencimento", form.due_day]] as const) {
+      if (v && (Number(v) < 1 || Number(v) > 31)) {
+        toast.error(`Dia de ${label} deve estar entre 1 e 31.`);
+        return;
+      }
+    }
     const limit = form.credit_limit ? parseBRL(form.credit_limit) : null;
     if (form.credit_limit && limit === null) {
       toast.error("Limite inválido. Use o formato 1.234,56.");
@@ -190,6 +213,7 @@ function CardsContent({ company }: { company: Company }) {
         brand: form.brand || null,
         institution_id: form.institution_id || null,
         administrator_id: form.administrator_id || null,
+        account_id: form.account_id || null,
         holder: form.holder || null,
         last_four_digits: form.last_four_digits || null,
         closing_day: form.closing_day ? Number(form.closing_day) : null,
@@ -475,6 +499,24 @@ function CardsContent({ company }: { company: Company }) {
                     inputMode="decimal"
                   />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Conta relacionada (pagamento da fatura)</Label>
+                <Select
+                  value={form.account_id}
+                  onValueChange={(v) => setForm({ ...form, account_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Opcional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(accounts ?? []).map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.nickname || a.account_number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">

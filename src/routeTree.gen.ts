@@ -22,6 +22,7 @@ import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedInstituicoesRouteImport } from './routes/_authenticated/instituicoes'
 import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPagamentosFaturasRouteImport } from './routes/_authenticated/pagamentos-faturas'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedFaturasIndexRouteImport } from './routes/_authenticated/faturas.index'
 import { Route as AuthenticatedFaturasIdRouteImport } from './routes/_authenticated/faturas.$id'
@@ -95,6 +96,12 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPagamentosFaturasRoute =
+  AuthenticatedPagamentosFaturasRouteImport.update({
+    id: '/pagamentos-faturas',
+    path: '/pagamentos-faturas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/instituicoes': typeof AuthenticatedInstituicoesRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pagamentos-faturas': typeof AuthenticatedPagamentosFaturasRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/faturas/$id': typeof AuthenticatedFaturasIdRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/instituicoes': typeof AuthenticatedInstituicoesRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pagamentos-faturas': typeof AuthenticatedPagamentosFaturasRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
   '/faturas/$id': typeof AuthenticatedFaturasIdRoute
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/instituicoes': typeof AuthenticatedInstituicoesRoute
   '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/pagamentos-faturas': typeof AuthenticatedPagamentosFaturasRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/faturas/$id': typeof AuthenticatedFaturasIdRoute
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/instituicoes'
     | '/lancamentos'
     | '/onboarding'
+    | '/pagamentos-faturas'
     | '/usuarios'
     | '/faturas/$id'
     | '/importacoes/$id'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/instituicoes'
     | '/lancamentos'
     | '/onboarding'
+    | '/pagamentos-faturas'
     | '/usuarios'
     | '/'
     | '/faturas/$id'
@@ -236,6 +248,7 @@ export interface FileRouteTypes {
     | '/_authenticated/instituicoes'
     | '/_authenticated/lancamentos'
     | '/_authenticated/onboarding'
+    | '/_authenticated/pagamentos-faturas'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
     | '/_authenticated/faturas/$id'
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pagamentos-faturas': {
+      id: '/_authenticated/pagamentos-faturas'
+      path: '/pagamentos-faturas'
+      fullPath: '/pagamentos-faturas'
+      preLoaderRoute: typeof AuthenticatedPagamentosFaturasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
       path: '/usuarios'
@@ -391,6 +411,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInstituicoesRoute: typeof AuthenticatedInstituicoesRoute
   AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPagamentosFaturasRoute: typeof AuthenticatedPagamentosFaturasRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedFaturasIdRoute: typeof AuthenticatedFaturasIdRoute
@@ -408,6 +429,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInstituicoesRoute: AuthenticatedInstituicoesRoute,
   AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPagamentosFaturasRoute: AuthenticatedPagamentosFaturasRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedFaturasIdRoute: AuthenticatedFaturasIdRoute,
