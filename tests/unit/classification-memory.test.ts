@@ -96,7 +96,7 @@ describe("memória de classificação", () => {
 });
 
 describe("PAN — pagamento da fatura anterior", () => {
-  const text = readFileSync("tests/fixtures/pan-setembro-2026-sanitizado.txt", "utf8").replace(/^--- pagina /gm, "\u000c--- pagina ");
+  const text = readFileSync("tests/fixtures/pan-setembro-2026-sanitizado.txt", "utf8");
   const { rows, integrity } = parsePdfText(text, { sourceType: "cartao", fallbackYear: 2026 });
   it("9 registros, pagamento preservado e informativo, total 249,95 validado", () => {
     expect(rows).toHaveLength(9);
