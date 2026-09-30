@@ -639,6 +639,20 @@ async function main() {
       amount: 1, direction: "saida", origin: "manual", category_id: ids.catAlfa, classification_source: "regra_aprendida", classification_rule_id: ids.ruleBeta,
     }).select());
 
+  // ============ PROV — proveniência exige evidência ============
+  const txBase = { company_id: ids.alfa, source_type: "conta", posted_at: "2026-08-05", description: "qa prov", normalized_description: "qa prov", amount: 1, direction: "saida", origin: "manual", category_id: ids.catAlfa };
+  await deny("PROV-01", "Regra aprendida sem referência é rejeitada", () =>
+    finAlfaC.from("transactions").insert({ ...txBase, classification_source: "regra_aprendida" }).select());
+  await deny("PROV-02", "Regra do sistema sem identificador é rejeitada", () =>
+    finAlfaC.from("transactions").insert({ ...txBase, classification_source: "regra_parser" }).select());
+  await deny("PROV-03", "Não classificado com categoria é rejeitado", () =>
+    finAlfaC.from("transactions").insert({ ...txBase, classification_source: "nao_classificado" }).select());
+  {
+    const { data, error } = await finAlfaC.from("transactions").insert({ ...txBase, classification_source: "manual", classified_by: ids.ruleBeta ?? null }).select("classified_by").single();
+    const me = (await finAlfaC.auth.getUser()).data.user?.id;
+    record("PROV-04", "Manual registra o próprio usuário (não aceita usuário forjado)", "classified_by = usuário", !error && data?.classified_by === me, error?.message ?? String(data?.classified_by));
+  }
+
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
     ["PRIV-01", "has_permission", { _company: ids.alfa, _permission: "audit.view" }],

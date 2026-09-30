@@ -21,7 +21,7 @@ import {
 import { formatBRL, formatDate, parseBRL } from "@/lib/format";
 import { UNCLASSIFIED_LABEL, normalizeDescription, type ImportIntegrity } from "@/lib/importers";
 import { confirmStaged, overrideIntegrity, reprocessImport, signedDocumentUrl } from "@/lib/import-service";
-import { learnClassification, SOURCE_LABEL } from "@/lib/classification-service";
+import { learnClassification, provenanceLabel } from "@/lib/classification-service";
 import { ImportIntegrityPanel } from "@/components/import-integrity-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -456,9 +456,7 @@ function ReviewContent({ company }: { company: Company }) {
                         ? (s.classification_suggestion as { reason?: string }).reason === "ambigua"
                           ? "Ambígua — revisar"
                           : "Sugestão disponível"
-                        : s.category_id
-                          ? SOURCE_LABEL[s.classification_source]
-                          : ""}
+                        : provenanceLabel(s)}
                     </div>
                   </TableCell>
                   <TableCell className="text-xs">

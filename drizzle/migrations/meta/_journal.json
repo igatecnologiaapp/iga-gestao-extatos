@@ -85,6 +85,27 @@
       "when": 1790771623940,
       "tag": "0011_classification_rule_ref_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790772396733,
+      "tag": "0012_classification_provenance_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790772423086,
+      "tag": "0013_classification_provenance_inherit_on_confirm",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790772471129,
+      "tag": "0014_classification_provenance_fix_field_ref",
+      "breakpoints": true
     }
   ]
 }
