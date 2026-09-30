@@ -24,4 +24,4 @@
 ## Correção complementar — pagamento anterior + memória de classificação
 - [x] Pagamento da fatura anterior informativo (não compõe total)
 - [x] Memória de classificação por empresa + tela de regras
-- [x] Testes (98 unit, 141 segurança, E2E), scanner, publicação, relatório seção 26 — aguardando homologação
+- [x] Testes (98 unit, 141 segurança, E2E), scanner, publicação, relatório seções 26–27 — validado no ambiente publicado
