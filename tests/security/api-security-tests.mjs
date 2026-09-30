@@ -633,6 +633,12 @@ async function main() {
       amount: 1, direction: "saida", origin: "manual", category_id: ids.catBeta, classification_source: "regra_aprendida", classification_rule_id: ids.ruleBeta,
     }).select());
 
+  await deny("CLS-13", "Lançamento não referencia regra de outra empresa mesmo com categoria própria", () =>
+    finAlfaC.from("transactions").insert({
+      company_id: ids.alfa, source_type: "conta", posted_at: "2026-08-05", description: "qa cls2", normalized_description: "qa cls2",
+      amount: 1, direction: "saida", origin: "manual", category_id: ids.catAlfa, classification_source: "regra_aprendida", classification_rule_id: ids.ruleBeta,
+    }).select());
+
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
     ["PRIV-01", "has_permission", { _company: ids.alfa, _permission: "audit.view" }],
