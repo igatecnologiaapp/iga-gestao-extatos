@@ -105,7 +105,7 @@ function RulesContent({ company }: { company: Company }) {
       .from("classification_rules")
       .update({ status: r.status === "ativo" ? "inativo" : "ativo" })
       .eq("id", r.id);
-    if (error) return toast.error(`Não foi possível alterar: ${error.message}`);
+    if (error) { toast.error(`Não foi possível alterar: ${error.message}`); return; }
     toast.success(r.status === "ativo" ? "Regra desativada." : "Regra reativada.");
     await qc.invalidateQueries({ queryKey: ["classification-rules", company.id] });
   }
@@ -207,8 +207,8 @@ function RuleDialog({
 
   async function save() {
     const p = stablePattern(pattern);
-    if (p.length < 3) return toast.error("Informe um padrão com pelo menos 3 letras (números são ignorados).");
-    if (!categoryId) return toast.error("Selecione a categoria.");
+    if (p.length < 3) { toast.error("Informe um padrão com pelo menos 3 letras (números são ignorados)."); return; }
+    if (!categoryId) { toast.error("Selecione a categoria."); return; }
     setBusy(true);
     const values = {
       pattern: p,

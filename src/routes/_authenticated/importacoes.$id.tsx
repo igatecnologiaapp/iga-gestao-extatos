@@ -217,9 +217,6 @@ function ReviewContent({ company }: { company: Company }) {
 
   async function applyBulkCategory() {
     if (selected.size === 0 || !bulkCategory) return;
-    const newCat = categoryId === NO_CATEGORY ? null : categoryId;
-    const newSub = subcategoryId === NO_CATEGORY ? null : subcategoryId;
-    const classChanged = newCat !== row.category_id || newSub !== row.subcategory_id;
     setBusy(true);
     const { error } = await supabase
       .from("staged_transactions")
@@ -239,9 +236,6 @@ function ReviewContent({ company }: { company: Company }) {
 
   async function discardSelected() {
     if (selected.size === 0) return;
-    const newCat = categoryId === NO_CATEGORY ? null : categoryId;
-    const newSub = subcategoryId === NO_CATEGORY ? null : subcategoryId;
-    const classChanged = newCat !== row.category_id || newSub !== row.subcategory_id;
     setBusy(true);
     const { error } = await supabase
       .from("staged_transactions")
