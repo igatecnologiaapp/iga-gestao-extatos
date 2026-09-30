@@ -204,7 +204,7 @@ export function parsePdfText(
       const anomaly = detectDescriptionAnomalies(description);
       rowWarnings.push(...anomaly);
       if (anomaly.length) anomalies.push(`Página ${page}: ${description}`);
-      if (isCard && kind === "pagamento") rowWarnings.push("Pagamento de fatura — não compõe compras/despesas");
+      if (isCard && kind === "pagamento") rowWarnings.push("Pagamento da fatura anterior — informativo, não compõe o total da fatura atual");
 
       const s = ensureSection(section);
       s.count += 1;
@@ -228,6 +228,9 @@ export function parsePdfText(
             amount_text: tx[3],
             signed_amount: parsed.value === null ? null : parsed.negative ? -parsed.value : parsed.value,
             nature: isCard ? kind : direction ?? "indeterminado",
+            ...(isCard && kind === "pagamento"
+              ? { affects_invoice_total: false, refers_to: "fatura_anterior" }
+              : {}),
             section: section.label,
             card_last4: section.last4,
             card_role: section.role,

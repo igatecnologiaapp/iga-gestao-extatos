@@ -276,6 +276,82 @@ export type Database = {
           },
         ]
       }
+      classification_rules: {
+        Row: {
+          category_id: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_used_at: string | null
+          match_type: Database["public"]["Enums"]["classification_match"]
+          origin: Database["public"]["Enums"]["classification_rule_origin"]
+          pattern: string
+          rejected_count: number
+          sample_description: string | null
+          status: Database["public"]["Enums"]["record_status"]
+          subcategory_id: string | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category_id: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_used_at?: string | null
+          match_type?: Database["public"]["Enums"]["classification_match"]
+          origin?: Database["public"]["Enums"]["classification_rule_origin"]
+          pattern: string
+          rejected_count?: number
+          sample_description?: string | null
+          status?: Database["public"]["Enums"]["record_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category_id?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_used_at?: string | null
+          match_type?: Database["public"]["Enums"]["classification_match"]
+          origin?: Database["public"]["Enums"]["classification_rule_origin"]
+          pattern?: string
+          rejected_count?: number
+          sample_description?: string | null
+          status?: Database["public"]["Enums"]["record_status"]
+          subcategory_id?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classification_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classification_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classification_rules_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string
@@ -617,6 +693,9 @@ export type Database = {
         Row: {
           amount: number | null
           category_id: string | null
+          classification_rule_id: string | null
+          classification_source: Database["public"]["Enums"]["classification_source"]
+          classification_suggestion: Json | null
           company_id: string
           created_at: string
           currency: string
@@ -639,6 +718,9 @@ export type Database = {
         Insert: {
           amount?: number | null
           category_id?: string | null
+          classification_rule_id?: string | null
+          classification_source?: Database["public"]["Enums"]["classification_source"]
+          classification_suggestion?: Json | null
           company_id: string
           created_at?: string
           currency?: string
@@ -663,6 +745,9 @@ export type Database = {
         Update: {
           amount?: number | null
           category_id?: string | null
+          classification_rule_id?: string | null
+          classification_source?: Database["public"]["Enums"]["classification_source"]
+          classification_suggestion?: Json | null
           company_id?: string
           created_at?: string
           currency?: string
@@ -690,6 +775,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staged_transactions_classification_rule_id_fkey"
+            columns: ["classification_rule_id"]
+            isOneToOne: false
+            referencedRelation: "classification_rules"
             referencedColumns: ["id"]
           },
           {
@@ -801,10 +893,13 @@ export type Database = {
       transactions: {
         Row: {
           account_id: string | null
+          affects_invoice_total: boolean
           amount: number
           card_id: string | null
           category_id: string | null
           charge_kind: Database["public"]["Enums"]["card_charge_kind"] | null
+          classification_rule_id: string | null
+          classification_source: Database["public"]["Enums"]["classification_source"]
           company_id: string
           created_at: string
           created_by: string | null
@@ -833,10 +928,13 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          affects_invoice_total?: boolean
           amount: number
           card_id?: string | null
           category_id?: string | null
           charge_kind?: Database["public"]["Enums"]["card_charge_kind"] | null
+          classification_rule_id?: string | null
+          classification_source?: Database["public"]["Enums"]["classification_source"]
           company_id: string
           created_at?: string
           created_by?: string | null
@@ -865,10 +963,13 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          affects_invoice_total?: boolean
           amount?: number
           card_id?: string | null
           category_id?: string | null
           charge_kind?: Database["public"]["Enums"]["card_charge_kind"] | null
+          classification_rule_id?: string | null
+          classification_source?: Database["public"]["Enums"]["classification_source"]
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -915,6 +1016,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_classification_rule_id_fkey"
+            columns: ["classification_rule_id"]
+            isOneToOne: false
+            referencedRelation: "classification_rules"
             referencedColumns: ["id"]
           },
           {
@@ -1059,6 +1167,13 @@ export type Database = {
         | "pagamento"
       card_status: "ativo" | "bloqueado" | "cancelado" | "inativo"
       card_type: "credito" | "debito" | "credito_debito"
+      classification_match: "exata" | "contem"
+      classification_rule_origin: "aprendida" | "manual"
+      classification_source:
+        | "manual"
+        | "regra_aprendida"
+        | "regra_parser"
+        | "nao_classificado"
       duplicate_flag: "nenhuma" | "possivel" | "confirmada" | "ignorada"
       import_file_format: "pdf" | "ofx" | "csv" | "xlsx"
       import_source_type: "conta" | "cartao"
@@ -1229,6 +1344,14 @@ export const Constants = {
       ],
       card_status: ["ativo", "bloqueado", "cancelado", "inativo"],
       card_type: ["credito", "debito", "credito_debito"],
+      classification_match: ["exata", "contem"],
+      classification_rule_origin: ["aprendida", "manual"],
+      classification_source: [
+        "manual",
+        "regra_aprendida",
+        "regra_parser",
+        "nao_classificado",
+      ],
       duplicate_flag: ["nenhuma", "possivel", "confirmada", "ignorada"],
       import_file_format: ["pdf", "ofx", "csv", "xlsx"],
       import_source_type: ["conta", "cartao"],

@@ -21,6 +21,7 @@ import {
 import { formatBRL, formatDate, parseBRL } from "@/lib/format";
 import { UNCLASSIFIED_LABEL, normalizeDescription, type ImportIntegrity } from "@/lib/importers";
 import { confirmStaged, overrideIntegrity, reprocessImport, signedDocumentUrl } from "@/lib/import-service";
+import { learnClassification, SOURCE_LABEL } from "@/lib/classification-service";
 import { ImportIntegrityPanel } from "@/components/import-integrity-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,6 +223,9 @@ function ReviewContent({ company }: { company: Company }) {
       .update({
         category_id: bulkCategory === NO_CATEGORY ? null : bulkCategory,
         subcategory_id: null,
+        classification_source: bulkCategory === NO_CATEGORY ? "nao_classificado" : "manual",
+        classification_rule_id: null,
+        classification_suggestion: null,
       })
       .in("id", [...selected]);
     setBusy(false);
@@ -445,7 +449,18 @@ function ReviewContent({ company }: { company: Company }) {
                     {s.amount === null ? "—" : formatBRL(Number(s.amount))}
                   </TableCell>
                   <TableCell>{s.direction ? DIRECTION_LABELS[s.direction] : "—"}</TableCell>
-                  <TableCell>{categoryName(s.category_id)}</TableCell>
+                  <TableCell>
+                    {categoryName(s.category_id)}
+                    <div className="text-[11px] text-muted-foreground">
+                      {s.classification_suggestion
+                        ? (s.classification_suggestion as { reason?: string }).reason === "ambigua"
+                          ? "Ambígua — revisar"
+                          : "Sugestão disponível"
+                        : s.category_id
+                          ? SOURCE_LABEL[s.classification_source]
+                          : ""}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-xs">
                     {s.status === "confirmado" ? (
                       <span className="text-primary">Confirmado</span>
@@ -535,6 +550,7 @@ function ReviewContent({ company }: { company: Company }) {
 
       {editing && (
         <EditStagedDialog
+          userId={user?.id ?? null}
           row={editing}
           categories={categories ?? []}
           subcategories={subcategories ?? []}
@@ -559,12 +575,14 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 }
 
 function EditStagedDialog({
+  userId,
   row,
   categories,
   subcategories,
   onClose,
   onSaved,
 }: {
+  userId: string | null;
   row: StagedTransaction;
   categories: Array<{ id: string; name: string }>;
   subcategories: Array<{ id: string; name: string; category_id: string }>;
@@ -584,6 +602,9 @@ function EditStagedDialog({
     if (!postedAt) { toast.error("Informe a data do lançamento."); return; }
     if (parsedAmount === null) { toast.error("Informe um valor válido (ex.: 1.234,56)."); return; }
     if (!direction) { toast.error("Informe se o lançamento é entrada ou saída."); return; }
+    const newCat = categoryId === NO_CATEGORY ? null : categoryId;
+    const newSub = subcategoryId === NO_CATEGORY ? null : subcategoryId;
+    const classChanged = newCat !== row.category_id || newSub !== row.subcategory_id;
     setBusy(true);
     const { error } = await supabase
       .from("staged_transactions")
@@ -600,16 +621,33 @@ function EditStagedDialog({
         direction,
         category_id: categoryId === NO_CATEGORY ? null : categoryId,
         subcategory_id: subcategoryId === NO_CATEGORY ? null : subcategoryId,
+        ...(classChanged
+          ? { classification_source: newCat ? ("manual" as const) : ("nao_classificado" as const), classification_rule_id: null, classification_suggestion: null }
+          : {}),
         duplicate_state: row.duplicate_state === "possivel" ? "ignorada" : row.duplicate_state,
       })
       .eq("id", row.id);
     setBusy(false);
     if (error) { toast.error(`Não foi possível salvar: ${error.message}`); return; }
+    if (classChanged) {
+      try {
+        const r = await learnClassification({
+          companyId: row.company_id, description, categoryId: newCat, subcategoryId: newSub,
+          previousRuleId: row.classification_rule_id, previousCategoryId: row.category_id,
+          previousSubcategoryId: row.subcategory_id, userId,
+        });
+        if (r.learned) toast.info("Classificação memorizada para próximos lançamentos.");
+      } catch { toast.warning("Lançamento salvo, mas a memória de classificação não foi atualizada."); }
+    }
     toast.success("Lançamento atualizado.");
     await onSaved();
   }
 
   const subs = subcategories.filter((s) => s.category_id === categoryId);
+  const suggestion = row.classification_suggestion as
+    | { reason: string; options: Array<{ category_id: string; subcategory_id: string | null; rule_id: string }> }
+    | null;
+  const suggestionOptions = suggestion?.options ?? [];
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -638,6 +676,29 @@ function EditStagedDialog({
               />
             </div>
           </div>
+          {suggestionOptions.length > 0 && (
+            <div className="rounded-md border border-dashed px-3 py-2 text-xs">
+              <p className="font-medium">
+                {suggestion?.reason === "ambigua"
+                  ? "Classificação ambígua — revise:"
+                  : suggestion?.reason === "regra_inativa"
+                    ? "Regra anterior aponta para categoria/subcategoria inativa — revise:"
+                    : suggestion?.reason === "regra_rejeitada"
+                      ? "Regra já corrigida anteriormente — confirme:"
+                      : "Sugestão:"}
+              </p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {suggestionOptions.map((o) => (
+                  <Button key={o.rule_id} type="button" size="sm" variant="outline"
+                    disabled={!categories.some((c) => c.id === o.category_id)}
+                    onClick={() => { setCategoryId(o.category_id); setSubcategoryId(o.subcategory_id ?? NO_CATEGORY); }}>
+                    {categories.find((c) => c.id === o.category_id)?.name ?? "Categoria inativa"}
+                    {o.subcategory_id ? ` → ${subcategories.find((x) => x.id === o.subcategory_id)?.name ?? "subcategoria inativa"}` : ""}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="e-desc">Descrição</Label>
             <Input

@@ -1,3 +1,4 @@
+import { learnClassification } from "@/lib/classification-service";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -608,17 +609,35 @@ function TransactionDialog({
       category_id: categoryId === NO_CATEGORY ? null : categoryId,
       notes: notes.trim() || null,
     };
+    const prevCat = transaction?.category_id ?? null;
+    const classChanged = payload.category_id !== prevCat;
+    const classFields = classChanged
+      ? {
+          classification_source: payload.category_id ? ("manual" as const) : ("nao_classificado" as const),
+          classification_rule_id: null,
+          ...(payload.category_id !== prevCat ? { subcategory_id: null } : {}),
+        }
+      : {};
 
     const { error } = transaction
       ? await supabase
           .from("transactions")
-          .update({ ...payload, updated_by: userId })
+          .update({ ...payload, ...classFields, updated_by: userId })
           .eq("id", transaction.id)
       : await supabase
           .from("transactions")
-          .insert({ ...payload, origin: "manual", created_by: userId });
+          .insert({ ...payload, ...classFields, origin: "manual", created_by: userId });
     setBusy(false);
     if (error) { toast.error(`Não foi possível salvar: ${error.message}`); return; }
+    if (classChanged && payload.category_id) {
+      try {
+        await learnClassification({
+          companyId: company.id, description: payload.description, categoryId: payload.category_id,
+          subcategoryId: null, previousRuleId: transaction?.classification_rule_id ?? null,
+          previousCategoryId: prevCat, previousSubcategoryId: transaction?.subcategory_id ?? null, userId,
+        });
+      } catch { /* memória é auxiliar; o lançamento já foi salvo */ }
+    }
     toast.success(transaction ? "Lançamento atualizado." : "Lançamento criado.");
     await onSaved();
   }

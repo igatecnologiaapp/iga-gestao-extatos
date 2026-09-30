@@ -23,6 +23,7 @@ import { Route as AuthenticatedInstituicoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPagamentosFaturasRouteImport } from './routes/_authenticated/pagamentos-faturas'
+import { Route as AuthenticatedRegrasClassificacaoRouteImport } from './routes/_authenticated/regras-classificacao'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedFaturasIndexRouteImport } from './routes/_authenticated/faturas.index'
 import { Route as AuthenticatedFaturasIdRouteImport } from './routes/_authenticated/faturas.$id'
@@ -102,6 +103,12 @@ const AuthenticatedPagamentosFaturasRoute =
     path: '/pagamentos-faturas',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRegrasClassificacaoRoute =
+  AuthenticatedRegrasClassificacaoRouteImport.update({
+    id: '/regras-classificacao',
+    path: '/regras-classificacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pagamentos-faturas': typeof AuthenticatedPagamentosFaturasRoute
+  '/regras-classificacao': typeof AuthenticatedRegrasClassificacaoRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/faturas/$id': typeof AuthenticatedFaturasIdRoute
   '/importacoes/$id': typeof AuthenticatedImportacoesIdRoute
@@ -164,6 +172,7 @@ export interface FileRoutesByTo {
   '/lancamentos': typeof AuthenticatedLancamentosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pagamentos-faturas': typeof AuthenticatedPagamentosFaturasRoute
+  '/regras-classificacao': typeof AuthenticatedRegrasClassificacaoRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
   '/faturas/$id': typeof AuthenticatedFaturasIdRoute
@@ -186,6 +195,7 @@ export interface FileRoutesById {
   '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pagamentos-faturas': typeof AuthenticatedPagamentosFaturasRoute
+  '/_authenticated/regras-classificacao': typeof AuthenticatedRegrasClassificacaoRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/faturas/$id': typeof AuthenticatedFaturasIdRoute
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/lancamentos'
     | '/onboarding'
     | '/pagamentos-faturas'
+    | '/regras-classificacao'
     | '/usuarios'
     | '/faturas/$id'
     | '/importacoes/$id'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/lancamentos'
     | '/onboarding'
     | '/pagamentos-faturas'
+    | '/regras-classificacao'
     | '/usuarios'
     | '/'
     | '/faturas/$id'
@@ -249,6 +261,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lancamentos'
     | '/_authenticated/onboarding'
     | '/_authenticated/pagamentos-faturas'
+    | '/_authenticated/regras-classificacao'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
     | '/_authenticated/faturas/$id'
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPagamentosFaturasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/regras-classificacao': {
+      id: '/_authenticated/regras-classificacao'
+      path: '/regras-classificacao'
+      fullPath: '/regras-classificacao'
+      preLoaderRoute: typeof AuthenticatedRegrasClassificacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
       path: '/usuarios'
@@ -412,6 +432,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPagamentosFaturasRoute: typeof AuthenticatedPagamentosFaturasRoute
+  AuthenticatedRegrasClassificacaoRoute: typeof AuthenticatedRegrasClassificacaoRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedFaturasIdRoute: typeof AuthenticatedFaturasIdRoute
@@ -430,6 +451,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPagamentosFaturasRoute: AuthenticatedPagamentosFaturasRoute,
+  AuthenticatedRegrasClassificacaoRoute: AuthenticatedRegrasClassificacaoRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedFaturasIdRoute: AuthenticatedFaturasIdRoute,
