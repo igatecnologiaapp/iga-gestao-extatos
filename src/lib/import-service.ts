@@ -13,6 +13,8 @@ import {
   normalizeDescription,
   parseDocument,
   resolveCategoryId,
+  type ImportIntegrity,
+  type ParseResult,
 } from "@/lib/importers";
 
 export const STORAGE_BUCKET = "financial-documents";
@@ -125,8 +127,59 @@ export async function createImport(input: CreateImportInput): Promise<ImportBatc
   }
 
   try {
-    const parsed = await parseDocument(format, buffer);
+    const parsed = await parseDocument(format, buffer, { sourceType: input.sourceType });
 
+    const payload = await buildStagedPayload({
+      companyId,
+      batchId: batch.id,
+      accountId: input.accountId,
+      cardId: input.cardId,
+      categories: input.categories,
+      parsed,
+    });
+    for (let i = 0; i < payload.length; i += 200) {
+      const { error } = await supabase
+        .from("staged_transactions")
+        .insert(payload.slice(i, i + 200));
+      if (error) throw new ImportError("falha_registro", error.message);
+    }
+
+    const { data: updated } = await supabase
+      .from("import_batches")
+      .update({
+        status: "revisao",
+        parsed_count: payload.length,
+        processed_at: new Date().toISOString(),
+        integrity: (parsed.integrity ?? null) as never,
+      })
+      .eq("id", batch.id)
+      .select("*")
+      .single();
+
+    return updated ?? batch;
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Falha desconhecida ao processar o documento.";
+    await supabase
+      .from("import_batches")
+      .update({ status: "erro", error_message: message })
+      .eq("id", batch.id);
+    throw err;
+  }
+}
+
+async function buildStagedPayload(p: {
+  companyId: string;
+  batchId: string;
+  accountId: string | null;
+  cardId: string | null;
+  categories: Array<{ id: string; name: string }>;
+  parsed: ParseResult;
+  startIndex?: number;
+}) {
+    const { companyId, parsed } = p;
+    const input = p;
+    const batch = { id: p.batchId };
     const seen = new Map<string, number>();
     const rows = parsed.rows.map((row, index) => {
       const fingerprint = fingerprintOf({
@@ -185,38 +238,11 @@ export async function createImport(input: CreateImportInput): Promise<ImportBatc
         warnings: row.warnings,
         fingerprint,
         raw: row.raw as never,
-        row_index: index,
+        row_index: (p.startIndex ?? 0) + index,
       };
     });
 
-    for (let i = 0; i < payload.length; i += 200) {
-      const { error } = await supabase
-        .from("staged_transactions")
-        .insert(payload.slice(i, i + 200));
-      if (error) throw new ImportError("falha_registro", error.message);
-    }
-
-    const { data: updated } = await supabase
-      .from("import_batches")
-      .update({
-        status: "revisao",
-        parsed_count: payload.length,
-        processed_at: new Date().toISOString(),
-      })
-      .eq("id", batch.id)
-      .select("*")
-      .single();
-
-    return updated ?? batch;
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Falha desconhecida ao processar o documento.";
-    await supabase
-      .from("import_batches")
-      .update({ status: "erro", error_message: message })
-      .eq("id", batch.id);
-    throw err;
-  }
+    return payload;
 }
 
 /** Confirma lançamentos em revisão, criando registros definitivos rastreáveis. */
@@ -256,8 +282,20 @@ export async function confirmStaged(params: {
     created_by: params.userId,
   }));
 
+  const integrity = params.batch.integrity as ImportIntegrity | null;
+  if (integrity?.status === "divergente" && !integrity.override) {
+    throw new ImportError(
+      "importacao_divergente",
+      "Divergência de integridade: os totais extraídos não conciliam com o documento. Corrija os itens ou registre uma decisão explícita antes de confirmar.",
+    );
+  }
   const { error } = await supabase.from("transactions").insert(payload);
-  if (error) throw new ImportError("falha_confirmacao", error.message);
+  if (error) {
+    if (error.message.includes("importacao_divergente_sem_decisao")) {
+      throw new ImportError("importacao_divergente", "Divergência de integridade sem decisão registrada — confirmação bloqueada.");
+    }
+    throw new ImportError("falha_confirmacao", error.message);
+  }
 
   const ids = valid.map((s) => s.id);
   await supabase.from("staged_transactions").update({ status: "confirmado" }).in("id", ids);
@@ -284,4 +322,92 @@ export async function signedDocumentUrl(path: string): Promise<string> {
   const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 300);
   if (error || !data) throw new ImportError("arquivo_indisponivel", "Arquivo original indisponível.");
   return data.signedUrl;
+}
+
+/**
+ * Reprocessa o mesmo lote a partir do arquivo original (sem criar lote paralelo).
+ * Só é permitido enquanto nenhum item foi confirmado; itens pendentes anteriores são
+ * marcados como descartados (preservados para auditoria), nunca excluídos.
+ */
+export async function reprocessImport(params: {
+  batch: ImportBatch;
+  categories: Array<{ id: string; name: string }>;
+}): Promise<{ count: number; integrity: ImportIntegrity | null }> {
+  const { batch } = params;
+  if ((batch.confirmed_count ?? 0) > 0 || batch.status === "confirmado") {
+    throw new ImportError(
+      "reprocessamento_bloqueado",
+      "Este lote já possui lançamentos confirmados; o reprocessamento automático não é permitido.",
+    );
+  }
+  const { data: file, error: dlError } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .download(batch.storage_path);
+  if (dlError || !file) throw new ImportError("arquivo_indisponivel", "Arquivo original indisponível.");
+  const parsed = await parseDocument(batch.file_format, await file.arrayBuffer(), {
+    sourceType: batch.source_type,
+  });
+
+  const { data: prev } = await supabase
+    .from("staged_transactions")
+    .select("row_index")
+    .eq("import_id", batch.id)
+    .order("row_index", { ascending: false })
+    .limit(1);
+  const startIndex = (prev?.[0]?.row_index ?? -1) + 1;
+
+  const { error: discardError } = await supabase
+    .from("staged_transactions")
+    .update({ status: "descartado" })
+    .eq("import_id", batch.id)
+    .eq("status", "pendente");
+  if (discardError) throw new ImportError("falha_registro", discardError.message);
+
+  const payload = await buildStagedPayload({
+    companyId: batch.company_id,
+    batchId: batch.id,
+    accountId: batch.account_id,
+    cardId: batch.card_id,
+    categories: params.categories,
+    parsed,
+    startIndex,
+  });
+  const { error } = await supabase.from("staged_transactions").insert(payload);
+  if (error) throw new ImportError("falha_registro", error.message);
+
+  await supabase
+    .from("import_batches")
+    .update({
+      status: "revisao",
+      parsed_count: payload.length,
+      processed_at: new Date().toISOString(),
+      error_message: null,
+      integrity: (parsed.integrity ?? null) as never,
+    })
+    .eq("id", batch.id);
+  return { count: payload.length, integrity: parsed.integrity ?? null };
+}
+
+/** Registra decisão explícita (auditada pelo log da importação) de confirmar apesar da divergência. */
+export async function overrideIntegrity(params: {
+  batch: ImportBatch;
+  userId: string | null;
+  email: string | null;
+  reason: string;
+}): Promise<void> {
+  const integrity = params.batch.integrity as ImportIntegrity | null;
+  if (!integrity) return;
+  const reason = params.reason.trim();
+  if (reason.length < 10) {
+    throw new ImportError("justificativa_obrigatoria", "Informe uma justificativa com pelo menos 10 caracteres.");
+  }
+  const next: ImportIntegrity = {
+    ...integrity,
+    override: { by: params.userId, email: params.email, at: new Date().toISOString(), reason },
+  };
+  const { error } = await supabase
+    .from("import_batches")
+    .update({ integrity: next as never })
+    .eq("id", params.batch.id);
+  if (error) throw new ImportError("falha_registro", error.message);
 }
