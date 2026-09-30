@@ -226,6 +226,9 @@ function ReviewContent({ company }: { company: Company }) {
       .update({
         category_id: bulkCategory === NO_CATEGORY ? null : bulkCategory,
         subcategory_id: null,
+        classification_source: bulkCategory === NO_CATEGORY ? "nao_classificado" : "manual",
+        classification_rule_id: null,
+        classification_suggestion: null,
       })
       .in("id", [...selected]);
     setBusy(false);
