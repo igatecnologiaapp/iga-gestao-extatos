@@ -65,6 +65,20 @@ export function suggestCategoryName(description: string): string | null {
 }
 
 /**
+ * Regra determinística do sistema que casou com a descrição, com identificador
+ * rastreável (`categoria:padrão`). `null` quando nenhuma regra classifica.
+ */
+export function matchSystemRule(description: string): { category: string; ruleId: string } | null {
+  const text = normalizeDescription(description);
+  if (!text) return null;
+  for (const rule of RULES) {
+    const p = rule.patterns.find((re) => re.test(text));
+    if (p) return rule.category === NO_CATEGORY ? null : { category: rule.category, ruleId: `${normalizeDescription(rule.category)}:${p.source}` };
+  }
+  return null;
+}
+
+/**
  * Regras semânticas obrigatórias (pagamento, estorno/crédito, juros, taxas):
  * têm prioridade sobre qualquer memória de classificação. "Compra" é regra fraca.
  */

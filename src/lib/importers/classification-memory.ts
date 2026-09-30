@@ -1,5 +1,5 @@
 import { normalizeDescription } from "./shared";
-import { suggestCategoryName, isSemanticallyLocked } from "./classify";
+import { matchSystemRule, isSemanticallyLocked } from "./classify";
 
 /**
  * Memória de classificação (sem IA): regras determinísticas por empresa.
@@ -33,6 +33,8 @@ export type ClassificationResult = {
   subcategory_id: string | null;
   source: ClassificationSource;
   rule_id: string | null;
+  /** Identificador da regra determinística do sistema (somente quando source = regra_parser). */
+  system_rule: string | null;
   suggestion: Suggestion | null;
 };
 
@@ -76,7 +78,7 @@ export function classify(input: {
   categories: CategoryLike[];
   subcategories: SubcategoryLike[];
 }): ClassificationResult {
-  const none: ClassificationResult = { category_id: null, subcategory_id: null, source: "nao_classificado", rule_id: null, suggestion: null };
+  const none: ClassificationResult = { category_id: null, subcategory_id: null, source: "nao_classificado", rule_id: null, system_rule: null, suggestion: null };
   const { description, categories, subcategories } = input;
   const norm = normalizeDescription(description);
   if (!norm) return none;
@@ -87,10 +89,10 @@ export function classify(input: {
   };
 
   // 1) Semântica obrigatória: pagamento/estorno/crédito/juros/taxa inequívocos.
-  const parser = suggestCategoryName(description);
+  const sys = matchSystemRule(description);
   if (isSemanticallyLocked(description)) {
-    const id = parser ? byName(parser) : null;
-    return id ? { ...none, category_id: id, source: "regra_parser" } : none;
+    const id = sys ? byName(sys.category) : null;
+    return id && sys ? { ...none, category_id: id, source: "regra_parser", system_rule: sys.ruleId } : none;
   }
 
   const stable = stablePattern(description);
@@ -133,9 +135,9 @@ export function classify(input: {
   }
 
   // Regra fraca do parser (ex.: "Compra") só quando não há memória.
-  if (parser) {
-    const id = byName(parser);
-    if (id) return { ...none, category_id: id, source: "regra_parser" };
+  if (sys) {
+    const id = byName(sys.category);
+    if (id) return { ...none, category_id: id, source: "regra_parser", system_rule: sys.ruleId };
   }
   return none;
 }

@@ -231,6 +231,7 @@ async function buildStagedPayload(p: {
         subcategory_id: cls.subcategory_id,
         classification_source: cls.source,
         classification_rule_id: cls.rule_id,
+        classification_system_rule: cls.system_rule,
         classification_suggestion: (cls.suggestion ?? null) as never,
         status: "pendente" as const,
         duplicate_state: (duplicateExisting || duplicateInFile
@@ -286,6 +287,7 @@ export async function confirmStaged(params: {
     subcategory_id: s.subcategory_id,
     classification_source: s.classification_source,
     classification_rule_id: s.classification_rule_id,
+    classification_system_rule: s.classification_system_rule,
     // Pagamento da fatura anterior: preservado como histórico, fora do total da fatura atual.
     ...(params.batch.source_type === "cartao" && (s.raw as { nature?: string } | null)?.nature === "pagamento"
       ? { charge_kind: "pagamento" as const, affects_invoice_total: false }

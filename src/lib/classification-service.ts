@@ -114,6 +114,26 @@ export async function learnClassification(params: {
   return { learned: !error, rejectedRule };
 }
 
+/**
+ * Rótulo de origem somente com evidência: sem regra/identificador/usuário registrado,
+ * a origem é exibida como indeterminada (nunca inventada).
+ */
+export function provenanceLabel(r: {
+  category_id: string | null;
+  classification_source: string;
+  classification_rule_id: string | null;
+  classification_system_rule?: string | null;
+  classified_by?: string | null;
+}): string {
+  if (!r.category_id) return "";
+  switch (r.classification_source) {
+    case "regra_aprendida": return r.classification_rule_id ? "Regra aprendida" : "Origem histórica indeterminada";
+    case "regra_parser": return r.classification_system_rule ? "Regra do sistema" : "Origem histórica indeterminada";
+    case "manual": return r.classified_by ? "Manual" : "Origem histórica indeterminada";
+    default: return "Origem histórica indeterminada";
+  }
+}
+
 export const SOURCE_LABEL: Record<string, string> = {
   manual: "Manual",
   regra_aprendida: "Regra aprendida",
