@@ -696,6 +696,9 @@ export type Database = {
           classification_rule_id: string | null
           classification_source: Database["public"]["Enums"]["classification_source"]
           classification_suggestion: Json | null
+          classification_system_rule: string | null
+          classified_at: string | null
+          classified_by: string | null
           company_id: string
           created_at: string
           currency: string
@@ -721,6 +724,9 @@ export type Database = {
           classification_rule_id?: string | null
           classification_source?: Database["public"]["Enums"]["classification_source"]
           classification_suggestion?: Json | null
+          classification_system_rule?: string | null
+          classified_at?: string | null
+          classified_by?: string | null
           company_id: string
           created_at?: string
           currency?: string
@@ -748,6 +754,9 @@ export type Database = {
           classification_rule_id?: string | null
           classification_source?: Database["public"]["Enums"]["classification_source"]
           classification_suggestion?: Json | null
+          classification_system_rule?: string | null
+          classified_at?: string | null
+          classified_by?: string | null
           company_id?: string
           created_at?: string
           currency?: string
@@ -900,6 +909,9 @@ export type Database = {
           charge_kind: Database["public"]["Enums"]["card_charge_kind"] | null
           classification_rule_id: string | null
           classification_source: Database["public"]["Enums"]["classification_source"]
+          classification_system_rule: string | null
+          classified_at: string | null
+          classified_by: string | null
           company_id: string
           created_at: string
           created_by: string | null
@@ -935,6 +947,9 @@ export type Database = {
           charge_kind?: Database["public"]["Enums"]["card_charge_kind"] | null
           classification_rule_id?: string | null
           classification_source?: Database["public"]["Enums"]["classification_source"]
+          classification_system_rule?: string | null
+          classified_at?: string | null
+          classified_by?: string | null
           company_id: string
           created_at?: string
           created_by?: string | null
@@ -970,6 +985,9 @@ export type Database = {
           charge_kind?: Database["public"]["Enums"]["card_charge_kind"] | null
           classification_rule_id?: string | null
           classification_source?: Database["public"]["Enums"]["classification_source"]
+          classification_system_rule?: string | null
+          classified_at?: string | null
+          classified_by?: string | null
           company_id?: string
           created_at?: string
           created_by?: string | null
