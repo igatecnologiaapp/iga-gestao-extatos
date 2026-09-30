@@ -25,3 +25,7 @@
 - [x] Pagamento da fatura anterior informativo (não compõe total)
 - [x] Memória de classificação por empresa + tela de regras
 - [x] Testes (98 unit, 141 segurança, E2E), scanner, publicação, relatório seções 26–27 — validado no ambiente publicado
+
+## Correção — classificação e proveniência
+- [x] Evidência obrigatória por origem, 4 itens PAN corrigidos, publicado (seção 28)
+- [ ] Saneamento histórico Caso C (450 registros) — aguarda autorização
