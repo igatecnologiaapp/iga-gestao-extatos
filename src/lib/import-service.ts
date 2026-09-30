@@ -375,7 +375,7 @@ export async function reprocessImport(params: {
   const { error } = await supabase.from("staged_transactions").insert(payload);
   if (error) throw new ImportError("falha_registro", error.message);
 
-  await supabase
+  const { error: batchError } = await supabase
     .from("import_batches")
     .update({
       status: "revisao",
@@ -385,6 +385,7 @@ export async function reprocessImport(params: {
       integrity: (parsed.integrity ?? null) as never,
     })
     .eq("id", batch.id);
+  if (batchError) throw new ImportError("falha_registro", batchError.message);
   return { count: payload.length, integrity: parsed.integrity ?? null };
 }
 
