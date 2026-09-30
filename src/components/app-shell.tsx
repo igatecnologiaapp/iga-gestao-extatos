@@ -17,6 +17,7 @@ import {
   Scale,
   ScrollText,
   Settings,
+  BookMarked,
   Tags,
   TrendingDown,
   Upload,
@@ -83,7 +84,10 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Configurações",
-    items: [{ to: "/configuracoes", label: "Configurações", icon: Settings }],
+    items: [
+      { to: "/configuracoes", label: "Configurações", icon: Settings },
+      { to: "/regras-classificacao", label: "Regras de Classificação", icon: BookMarked, permission: "category.view" },
+    ],
   },
 ];
 
