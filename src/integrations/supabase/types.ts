@@ -612,6 +612,13 @@ export type Database = {
             foreignKeyName: "invoice_payments_invoice_id_fkey"
             columns: ["invoice_id"]
             isOneToOne: false
+            referencedRelation: "card_invoice_summary"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "card_invoices"
             referencedColumns: ["id"]
           },
@@ -1043,6 +1050,13 @@ export type Database = {
             foreignKeyName: "transactions_invoice_id_fkey"
             columns: ["invoice_id"]
             isOneToOne: false
+            referencedRelation: "card_invoice_summary"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "card_invoices"
             referencedColumns: ["id"]
           },
@@ -1112,7 +1126,22 @@ export type Database = {
           total: number | null
           transaction_count: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "card_invoices_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
