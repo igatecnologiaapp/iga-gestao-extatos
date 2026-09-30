@@ -4,7 +4,23 @@ import { normalizeDescription } from "./shared";
 export const BASE_IMPORT_CATEGORIES = ["Compra", "Taxa", "Juros"] as const;
 export const UNCLASSIFIED_LABEL = "Não classificado";
 
+/**
+ * Pagamentos de fatura e créditos/estornos NUNCA recebem "Compra".
+ * Pagamento → categoria "Pagamento" somente se já existir no cadastro; caso contrário, Não classificado.
+ * Estorno/crédito → Não classificado (revisão humana). A natureza é decidida pelo parser, não aqui.
+ */
+const PAYMENT_PATTERNS = [
+  /\bpagamento (efetuado|recebido|de fatura|da fatura|fatura)\b/,
+  /\bpgto (efetuado|recebido|fatura)\b/,
+  /\bpagto (efetuado|recebido|fatura)\b/,
+];
+const CREDIT_PATTERNS = [/\bestorno\b/, /\bcredito\b/, /\bdevolucao\b/, /\breembolso\b/, /\bcashback\b/];
+export const PAYMENT_CATEGORY = "Pagamento";
+const NO_CATEGORY = "__none__";
+
 const RULES: Array<{ category: string; patterns: RegExp[] }> = [
+  { category: PAYMENT_CATEGORY, patterns: PAYMENT_PATTERNS },
+  { category: NO_CATEGORY, patterns: CREDIT_PATTERNS },
   {
     category: "Juros",
     patterns: [/\bjuros?\b/, /\brotativo\b/, /\bmora\b/, /\bencargos?\b/, /\bmulta\b/],
@@ -24,9 +40,6 @@ const RULES: Array<{ category: string; patterns: RegExp[] }> = [
     category: "Compra",
     patterns: [
       /\bcompra\b/,
-      /\bpagamento\b/,
-      /\bdebito automatico\b/,
-      /\bcartao\b/,
       /\bmercado\b/,
       /\bposto\b/,
       /\bsupermercado\b/,
@@ -37,14 +50,16 @@ const RULES: Array<{ category: string; patterns: RegExp[] }> = [
 ];
 
 /**
- * Sugere uma categoria com base na descrição.
+ * Sugere uma categoria com base na descrição (conservador).
  * Retorna `null` quando não há classificação segura → "Não classificado".
  */
 export function suggestCategoryName(description: string): string | null {
   const text = normalizeDescription(description);
   if (!text) return null;
   for (const rule of RULES) {
-    if (rule.patterns.some((p) => p.test(text))) return rule.category;
+    if (rule.patterns.some((p) => p.test(text))) {
+      return rule.category === NO_CATEGORY ? null : rule.category;
+    }
   }
   return null;
 }
