@@ -633,3 +633,34 @@ Status: FASES 0, 1, 2 e 3 HOMOLOGADAS. **FASE 4 — BLOQUEADA ATÉ AUTORIZAÇÃO
 - Publicado em https://iga-gestao-extatos.lovable.app.
 
 AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA.
+
+---
+
+## 24. Correção crítica — Integridade da leitura e importação de documentos financeiros (30/09/2026)
+
+### Causa raiz
+- **Causa:** o leitor de PDF aplicava uma única expressão ancorada (`^data desc valor$`) por linha visual. Na fatura PAN, os lançamentos estão em **duas colunas paralelas** na mesma altura; a linha reconstruída continha duas transações e a expressão incorporava a primeira (data + descrição + valor) à descrição da segunda, perdendo o primeiro valor.
+- **Componente:** `src/lib/importers/pdf.ts` (`parsePdfText` / `extractPdfText`).
+- **Comportamento anterior:** 5 registros, total R$ 209,04, fusões (ex.: "Pagamento Efetuado -R$ 25,16 26/08 Juros De Mora" = R$ 0,01) e todos marcados como Entrada (sinal ausente → entrada, sem considerar semântica de fatura).
+
+### PAN setembro/2026 (lote real `d6b6000c…`, reprocessado no mesmo lote — estava em Revisão, 0 confirmados; itens antigos marcados "descartado", não excluídos)
+- registros titular (8012): 5 · total titular: R$ 0,80 · pagamento: -R$ 25,16 (separado)
+- registros adicional (7181): 4 · total adicional: R$ 249,15
+- total da fatura: R$ 249,95 · diferença: R$ 0,00 · integridade: **VALIDADA**
+
+### Parser
+- anterior: texto linearizado + regex ancorada por linha.
+- novo (`pdf-textual-v2`): extração posicional (X/Y com tolerância, ordenação por X, lacunas de coluna, marcador de página) → segmentação por seção (cartão titular/adicional + final) → extração de **todas** as transações da linha (valor exige centavos; "Parcela 07/10" não é tratado como data/valor) → normalização → anomalias → validação matemática.
+- sinais: valor com sinal preservado em `raw.signed_amount`; natureza em fatura: positivo = compra/encargo (saída), negativo/C = pagamento ou crédito (entrada); extrato de conta mantém a regra anterior.
+- resumos, limites, mínimo, parcelamentos, CET e totais não viram transações.
+
+### Segurança da importação
+- validação matemática por seção e total da fatura (`import_batches.integrity`): Validada / Requer revisão / Divergente.
+- anomalias: data ou valor dentro da descrição, trecho não interpretado.
+- bloqueio: divergente sem decisão → botões de confirmação desabilitados + trigger `check_transaction_import_integrity` (banco) rejeita a gravação. Decisão explícita exige justificativa, registra usuário/data; nunca ajusta valores.
+- auditoria: parser, layout, contagem, totais, diferença, resultado e decisão ficam em `integrity`, registrados pelo `log_audit` de `import_batches`; edições da Revisão seguem no próprio registro.
+
+### Regressão / Testes
+- 81/81 unitários (11 novos: PAN sanitizado, texto linearizado do bug, PDFs sintéticos tabela simples / duas colunas + seções + negativos + titular/adicional + total declarado / divergência proposital, anomalias, agrupamento de linhas). CSV, OFX, XLS, XLSX e PDF anterior PASS.
+- 109/109 segurança. Typecheck e lint sem erros. E2E no preview: reprocessamento do PAN real = VALIDADA, 0 erros de console.
+- Não há OCR/IA. Migration `0005_import_integrity_control.sql`.
