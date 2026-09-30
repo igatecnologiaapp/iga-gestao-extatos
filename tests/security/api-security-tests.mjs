@@ -576,7 +576,7 @@ async function main() {
     finAlfaC.from("import_batches").update({ integrity: { status: "validada", parser: "x" } }).eq("id", ids.batchDiv).select());
   const { data: impAudit } = await admin.from("audit_log").select("id").eq("entity", "import_batches").eq("entity_id", ids.batchDiv).eq("action", "update");
   record("IMP-12", "Decisão de divergência registrada na auditoria", ">= 1", (impAudit ?? []).length >= 1, `registros: ${(impAudit ?? []).length}`);
-  ids.batchRe = await mkBatch("alfa", divergent);
+  ids.batchRe = await mkBatch("alfa", { status: "revisao", parser: "pdf-textual-v1" });
   await allow("IMP-13", "Lote sem confirmados pode ser reprocessado (nova integridade)", () =>
     finAlfaC.from("import_batches").update({ integrity: { status: "validada", parser: "pdf-textual-v2" } }).eq("id", ids.batchRe));
   await deny("IMP-14", "Reprocessamento não pode trazer decisão pronta", () =>

@@ -340,6 +340,12 @@ export async function reprocessImport(params: {
       "Este lote já possui lançamentos confirmados; o reprocessamento automático não é permitido.",
     );
   }
+  if ((batch.integrity as ImportIntegrity | null)?.status === "divergente") {
+    throw new ImportError(
+      "reprocessamento_bloqueado",
+      "Lote divergente: registre a decisão justificada ou faça uma nova importação do documento.",
+    );
+  }
   const { data: file, error: dlError } = await supabase.storage
     .from(STORAGE_BUCKET)
     .download(batch.storage_path);
