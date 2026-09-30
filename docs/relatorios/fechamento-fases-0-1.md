@@ -680,3 +680,6 @@ AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOM
 - Limitação residual: a leitura do PDF ocorre no navegador; a proteção do servidor garante que uma divergência registrada não seja apagada, mas não recalcula o documento.
 - Testes novos IMP-01…IMP-19 (backend direto): bloqueio de divergência, decisão justificada/auditada, reprocessamento seguro, A×B, perfil sem permissão, anônimo (lotes, itens, arquivo original).
 - Scanner: 0 achados (Critical 0, High 0). Segurança: 128/128. Unitários: 86/86.
+- Publicação: SHA `bf995cdae057eb6a0c01056d427cc0de4d02fcc6`, deployment `psr2.0eef163e-c5c4-4e7b-a5d9-8b8c66056fda`, /health OK. No ambiente público: lote PAN VALIDADA (R$ 249,95 / diferença R$ 0,00), "Pagamento Efetuado" = Entrada / Não classificado, console 0 erros. Scanner reexecutado após publicação: 0 achados.
+
+**CORREÇÃO CRÍTICA DE INTEGRIDADE DE IMPORTAÇÃO DEFINITIVAMENTE HOMOLOGADA. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA.**
