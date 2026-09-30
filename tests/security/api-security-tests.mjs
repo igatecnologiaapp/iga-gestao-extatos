@@ -536,6 +536,64 @@ async function main() {
   await deny("F3-31", "Anônimo não lê faturas", () => anon.from("card_invoices").select("id"));
   await deny("F3-32", "Anônimo não lê pagamentos", () => anon.from("invoice_payments").select("id"));
 
+  // ============ IMP — integridade da importação (correção crítica) ============
+  const divergent = { status: "divergente", parser: "pdf-textual-v2", declared_total: 100, reconstructed_total: 90, difference: 10 };
+  const mkBatch = async (company, integrity, extra = {}) => {
+    const { data, error } = await admin.from("import_batches").insert({
+      company_id: ids[company], source_type: "cartao", card_id: company === "alfa" ? ids.cardAlfa : await cardOf("beta"),
+      file_name: "qa-fatura.pdf", file_format: "pdf", file_size: 10, file_hash: `qa-imp-${company}-${Math.random()}`,
+      storage_path: `${ids[company]}/qa/${Math.random()}.pdf`, status: "revisao", integrity, ...extra,
+    }).select("id").single();
+    if (error) throw new Error(`lote IMP: ${error.message}`);
+    return data.id;
+  };
+  const impTx = (batch) => ({
+    company_id: ids.alfa, import_id: batch, source_type: "cartao", card_id: ids.cardAlfa, posted_at: "2026-08-05",
+    description: "QA divergente", normalized_description: "qa divergente", amount: 5, direction: "saida", origin: "importado",
+  });
+  ids.batchDiv = await mkBatch("alfa", divergent);
+  await deny("IMP-01", "Backend recusa lançamento de lote DIVERGENTE sem decisão", () =>
+    finAlfaC.from("transactions").insert(impTx(ids.batchDiv)).select());
+  await deny("IMP-02", "Não é possível trocar status divergente → validada direto na API", () =>
+    finAlfaC.from("import_batches").update({ integrity: { ...divergent, status: "validada" } }).eq("id", ids.batchDiv).select());
+  await deny("IMP-03", "Não é possível remover a integridade do lote", () =>
+    finAlfaC.from("import_batches").update({ integrity: null }).eq("id", ids.batchDiv).select());
+  await deny("IMP-04", "Decisão sem justificativa (< 10 caracteres) é recusada", () =>
+    finAlfaC.from("import_batches").update({ integrity: { ...divergent, override: { by: users.finAlfa.id, reason: "ok" } } }).eq("id", ids.batchDiv).select());
+  await deny("IMP-05", "Decisão em nome de outro usuário é recusada", () =>
+    finAlfaC.from("import_batches").update({ integrity: { ...divergent, override: { by: users.adminAlfa.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
+  await deny("IMP-06", "Perfil Consulta não registra decisão de divergência", () =>
+    conAlfa.from("import_batches").update({ integrity: { ...divergent, override: { by: users.conAlfa.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
+  await deny("IMP-07", "Empresa Beta não registra decisão em lote da Alfa", () =>
+    adminBeta.from("import_batches").update({ integrity: { ...divergent, override: { by: users.adminBeta.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
+  await allow("IMP-08", "Decisão justificada pelo próprio usuário é aceita", () =>
+    finAlfaC.from("import_batches").update({ integrity: { ...divergent, override: { by: users.finAlfa.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv));
+  const { data: ovr } = await admin.from("import_batches").select("integrity").eq("id", ids.batchDiv).single();
+  record("IMP-09", "Horário da decisão é carimbado pelo servidor", "preenchido", !!ovr?.integrity?.override?.at, JSON.stringify(ovr?.integrity?.override ?? {}));
+  await allow("IMP-10", "Após decisão justificada, lançamento do lote é aceito", () =>
+    finAlfaC.from("transactions").insert(impTx(ids.batchDiv)));
+  await deny("IMP-11", "Lote com lançamento confirmado não pode ser reprocessado (integridade imutável)", () =>
+    finAlfaC.from("import_batches").update({ integrity: { status: "validada", parser: "x" } }).eq("id", ids.batchDiv).select());
+  const { data: impAudit } = await admin.from("audit_log").select("id").eq("entity", "import_batches").eq("entity_id", ids.batchDiv).eq("action", "update");
+  record("IMP-12", "Decisão de divergência registrada na auditoria", ">= 1", (impAudit ?? []).length >= 1, `registros: ${(impAudit ?? []).length}`);
+  ids.batchRe = await mkBatch("alfa", divergent);
+  await allow("IMP-13", "Lote sem confirmados pode ser reprocessado (nova integridade)", () =>
+    finAlfaC.from("import_batches").update({ integrity: { status: "validada", parser: "pdf-textual-v2" } }).eq("id", ids.batchRe));
+  await deny("IMP-14", "Reprocessamento não pode trazer decisão pronta", () =>
+    finAlfaC.from("import_batches").update({ integrity: { status: "divergente", override: { by: users.finAlfa.id, reason: "forjado pelo cliente" } } }).eq("id", ids.batchRe).select());
+  ids.batchBeta2 = await mkBatch("beta", divergent);
+  await deny("IMP-15", "Empresa Alfa não reprocessa lote da Beta", () =>
+    finAlfaC.from("import_batches").update({ integrity: { status: "validada" } }).eq("id", ids.batchBeta2).select());
+  await deny("IMP-16", "Empresa Alfa não altera itens em revisão da Beta", () =>
+    finAlfaC.from("staged_transactions").update({ status: "descartado" }).eq("id", ids.stagedBeta).select());
+  await deny("IMP-17", "Anônimo não lê lotes de importação", () => anon.from("import_batches").select("id"));
+  await deny("IMP-18", "Anônimo não altera itens em revisão", () =>
+    anon.from("staged_transactions").update({ status: "descartado" }).eq("id", ids.stagedBeta).select());
+  await deny("IMP-19", "Anônimo não baixa arquivo original", async () => {
+    const r = await anon.storage.from("financial-documents").download(`${ids.beta}/qa-${stamp}/extrato.csv`);
+    return { data: r.data, error: r.error };
+  });
+
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
     ["PRIV-01", "has_permission", { _company: ids.alfa, _permission: "audit.view" }],
