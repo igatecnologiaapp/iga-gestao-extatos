@@ -709,3 +709,17 @@ AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOM
 - Scanner: sem achados. Typecheck OK.
 
 **Status:** CORREÇÃO COMPLEMENTAR IMPLEMENTADA — AGUARDANDO HOMOLOGAÇÃO. Desenvolvimento PARADO. Fase 4 BLOQUEADA.
+
+## 27. Validação pública final — Correção complementar (30/09/2026)
+
+**Produção:** SHA `d38ec4f5079bc63b2d3c99f9f7625e5f25568bfd`; deployment `psr2.3b96c997-7c00-402c-a284-47cb63b3fff3`; `/health` ok (build 2026-09-30T12:37:43Z); console sem erros.
+
+**PAN (lote em Revisão, não confirmado):** 9 lançamentos; titular R$ 0,80; adicional R$ 249,15; "Pagamento Efetuado" R$ 25,16 preservado como pagamento informativo (não compõe a fatura atual); total R$ 249,95; diferença R$ 0,00; integridade VALIDADA.
+
+**Memória (produção, dados sintéticos):** "TESTE MEMORIA CLASSIFICACAO QA" classificado manualmente em QA Memoria / QA Memoria Sub → regra exata aprendida. Segunda ocorrência "Teste Memoria Classificacao QA" (variação de caixa) recebeu categoria e subcategoria corretas com selo "Regra aprendida". Regra visível em Configurações → Regras de Classificação.
+
+**Limpeza:** removidos lotes, itens, regra e categoria sintéticos, e 4 CSVs fictícios do armazenamento privado (2 da rodada anterior + 2 desta), sem referências remanescentes. Auditoria preservada. Nenhuma alteração de código, banco, RLS ou storage policies → testes não repetidos (98/98, 141/141, scanner sem achados).
+
+**Observação (sem alteração nesta rodada):** no lote PAN em Revisão, 4 compras (Pier Seguradora ×2, Dl *google, Pg *getninjas) estão com categoria "Pagamento", atribuída antes desta correção (origem não determinável). A migração 0009 rotulou retroativamente itens em revisão já categorizados como "Regra do sistema", o que é impreciso para esses itens. Recomenda-se revisar essas categorias manualmente antes de confirmar o lote. Valores e total não são afetados.
+
+**CORREÇÃO SEMÂNTICA DE FATURA E MEMÓRIA DE CLASSIFICAÇÃO HOMOLOGADA NO AMBIENTE PUBLICADO. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA. DESENVOLVIMENTO PARADO.**
