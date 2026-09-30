@@ -7,6 +7,7 @@
 - **FASE 2 — HOMOLOGADA**
 - **FASE 3 — HOMOLOGADA** (Gestão de Cartões e Faturas; homologação formal do responsável em 28/09/2026 — seção 22 do relatório).
 - **FASE 4 — BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA DO RESPONSÁVEL.** Fases 5 e 6 bloqueadas.
+- Correção crítica de integridade de importação (PDF PAN) — concluída em 30/09/2026 (seção 24).
 - Desenvolvimento PARADO aguardando autorização para a Fase 4.
 
 ## Fase 3 — tarefas

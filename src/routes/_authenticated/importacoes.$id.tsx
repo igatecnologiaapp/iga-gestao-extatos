@@ -19,8 +19,9 @@ import {
   type TransactionDirection,
 } from "@/lib/domain";
 import { formatBRL, formatDate, parseBRL } from "@/lib/format";
-import { UNCLASSIFIED_LABEL } from "@/lib/importers";
-import { confirmStaged, signedDocumentUrl } from "@/lib/import-service";
+import { UNCLASSIFIED_LABEL, normalizeDescription, type ImportIntegrity } from "@/lib/importers";
+import { confirmStaged, overrideIntegrity, reprocessImport, signedDocumentUrl } from "@/lib/import-service";
+import { ImportIntegrityPanel } from "@/components/import-integrity-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -158,6 +159,49 @@ function ReviewContent({ company }: { company: Company }) {
     return { entrada, saida, saldo: entrada - saida, incomplete, duplicates };
   }, [pending]);
 
+  const integrity = (batch?.integrity ?? null) as ImportIntegrity | null;
+  const confirmBlocked = integrity?.status === "divergente" && !integrity.override;
+  const currentTotal = useMemo(() => {
+    if (!integrity || integrity.declared_total === null) return null;
+    let t = 0;
+    for (const s of pending) {
+      if (s.amount === null) continue;
+      const isPayment = /\b(pagamento|pgto)\b/.test(normalizeDescription(s.description));
+      if (s.direction === "saida") t += Number(s.amount);
+      else if (s.direction === "entrada" && !isPayment) t -= Number(s.amount);
+    }
+    return Math.round(t * 100) / 100;
+  }, [pending, integrity]);
+
+  async function reprocess() {
+    if (!batch) return;
+    setBusy(true);
+    try {
+      const r = await reprocessImport({ batch, categories: categories ?? [] });
+      setSelected(new Set());
+      toast.success(`Documento reprocessado: ${r.count} registro(s).`);
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao reprocessar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function override(reason: string) {
+    if (!batch) return;
+    setBusy(true);
+    try {
+      await overrideIntegrity({ batch, userId: user?.id ?? null, email: user?.email ?? null, reason });
+      toast.success("Decisão registrada na auditoria.");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao registrar a decisão.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const categoryName = (categoryId: string | null) =>
     (categories ?? []).find((c) => c.id === categoryId)?.name ?? UNCLASSIFIED_LABEL;
 
@@ -253,6 +297,16 @@ function ReviewContent({ company }: { company: Company }) {
           <SummaryCard label="Saldo do arquivo" value={formatBRL(summary.saldo)} />
         </div>
 
+        <ImportIntegrityPanel
+          integrity={integrity}
+          currentTotal={currentTotal}
+          canAct={canImport}
+          canReprocess={(batch.confirmed_count ?? 0) === 0 && batch.status !== "confirmado" && batch.status !== "cancelado"}
+          busy={busy}
+          onReprocess={() => void reprocess()}
+          onOverride={override}
+        />
+
         {(summary.duplicates > 0 || summary.incomplete > 0) && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300">
             <p className="flex items-start gap-2">
@@ -303,7 +357,7 @@ function ReviewContent({ company }: { company: Company }) {
             </Button>
             <Button
               size="sm"
-              disabled={busy || selected.size === 0}
+              disabled={busy || confirmBlocked || selected.size === 0}
               onClick={() => void confirm(pending.filter((s) => selected.has(s.id)))}
             >
               <CheckCircle2 className="mr-1.5 h-4 w-4" /> Confirmar selecionados
@@ -311,7 +365,7 @@ function ReviewContent({ company }: { company: Company }) {
             <Button
               size="sm"
               variant="secondary"
-              disabled={busy || pending.length === 0}
+              disabled={busy || confirmBlocked || pending.length === 0}
               onClick={() => void confirm(pending)}
             >
               Confirmar todos

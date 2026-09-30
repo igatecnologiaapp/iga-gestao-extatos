@@ -12,9 +12,45 @@ export type ParsedRow = {
   raw: Record<string, unknown>;
 };
 
+export type ParseContext = {
+  sourceType?: "conta" | "cartao";
+  fallbackYear?: number;
+};
+
+export type IntegritySection = {
+  key: string;
+  label: string;
+  card_last4: string | null;
+  card_role: string | null;
+  count: number;
+  purchases_total: number;
+  credits_total: number;
+  payments_total: number;
+  declared_total: number | null;
+  difference: number | null;
+};
+
+/** Controle de integridade da extração (validação matemática, sem IA). */
+export type ImportIntegrity = {
+  status: "validada" | "revisao" | "divergente";
+  parser: string;
+  layout: string;
+  row_count: number;
+  extracted_total: number | null;
+  declared_total: number | null;
+  difference: number | null;
+  sections: IntegritySection[];
+  anomalies: string[];
+  messages: string[];
+  evaluated_at: string;
+  /** Decisão explícita e auditada para confirmar apesar de divergência. */
+  override?: { by: string | null; email?: string | null; at: string; reason: string };
+};
+
 export type ParseResult = {
   rows: ParsedRow[];
   warnings: string[];
+  integrity?: ImportIntegrity;
 };
 
 /** Erro de importação com mensagem útil ao usuário (nunca "erro ao processar"). */
