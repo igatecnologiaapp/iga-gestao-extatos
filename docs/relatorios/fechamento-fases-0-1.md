@@ -683,3 +683,29 @@ AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOM
 - Publicação: SHA `bf995cdae057eb6a0c01056d427cc0de4d02fcc6`, deployment `psr2.0eef163e-c5c4-4e7b-a5d9-8b8c66056fda`, /health OK. No ambiente público: lote PAN VALIDADA (R$ 249,95 / diferença R$ 0,00), "Pagamento Efetuado" = Entrada / Não classificado, console 0 erros. Scanner reexecutado após publicação: 0 achados.
 
 **CORREÇÃO CRÍTICA DE INTEGRIDADE DE IMPORTAÇÃO DEFINITIVAMENTE HOMOLOGADA. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA.**
+
+## 26. Correção complementar — Pagamento da fatura anterior + Memória de classificação (30/09/2026)
+
+**Escopo autorizado:** somente semântica do pagamento da fatura anterior e memória de classificação. Fase 4 permanece BLOQUEADA.
+
+### Bloco 1 — Pagamento da fatura anterior
+- Parser PDF marca "Pagamento Efetuado" como informativo (`raw.affects_invoice_total=false`, `refers_to=fatura_anterior`) com aviso visível; nada é excluído (data, descrição, valor, sinal, cartão, arquivo e origem preservados).
+- Nova coluna `transactions.affects_invoice_total` (padrão true); na confirmação, pagamento de cartão recebe `charge_kind=pagamento` e `affects_invoice_total=false`.
+- `card_invoice_summary` soma apenas movimentos que compõem a fatura (migrações 0009/0010); pagamentos seguem contados como linhas informativas.
+- PAN setembro/2026: titular R$ 0,80, adicional R$ 249,15, total R$ 249,95, diferença R$ 0,00 (teste automatizado).
+
+### Bloco 2 — Memória de classificação
+- Tabela `classification_rules` por empresa (RLS, auditoria, sem exclusão — apenas desativação); categoria/subcategoria obrigatoriamente da mesma empresa e ativas.
+- Classificação manual (revisão de importação e Central de Lançamentos) gera/atualiza regra de correspondência exata sobre descrição normalizada (sem números/parcelas).
+- Aplicação conservadora: somente correspondência exata e inequívoca aplica; conflitos, similares, regras inativas ou rejeitadas viram apenas sugestão. Regra semântica (pagamento/estorno) sempre prevalece sobre a memória.
+- Origem da classificação registrada (manual, regra aprendida, regra semântica, não classificado) e exibida na revisão; sem reclassificação retroativa.
+- Nova tela "Regras de Classificação" (Configurações): consultar, criar, editar e desativar.
+- Trigger 0011 impede referenciar regra de outra empresa.
+
+### Testes
+- Unitários: 98/98 (inclui memória, ambiguidade, A×B, categoria inativa, prioridade semântica, PAN).
+- Segurança: 141/141 (novos CLS-01..13: isolamento A×B, RBAC auditor, sem exclusão, auditoria, anônimo negado, referência cruzada).
+- E2E (preview, dados fictícios): classificação manual de "PIER SEGURADORA QA" → nova importação classificou automaticamente com "Regra aprendida"; item sem regra ficou "Não classificado". Dados de teste removidos; auditoria preservada (2 arquivos CSV fictícios permanecem no armazenamento privado).
+- Scanner: sem achados. Typecheck OK.
+
+**Status:** CORREÇÃO COMPLEMENTAR IMPLEMENTADA — AGUARDANDO HOMOLOGAÇÃO. Desenvolvimento PARADO. Fase 4 BLOQUEADA.
