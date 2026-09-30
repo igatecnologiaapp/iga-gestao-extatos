@@ -113,7 +113,7 @@ export function classify(input: {
     if (valid.length === 0) return { ...none, suggestion: { reason: "regra_inativa", options: opts } };
     const rule = valid[0]!;
     if (rule.rejected_count > 0) return { ...none, suggestion: { reason: "regra_rejeitada", options: opts } };
-    return { category_id: rule.category_id, subcategory_id: rule.subcategory_id, source: "regra_aprendida", rule_id: rule.id, suggestion: null };
+    return { category_id: rule.category_id, subcategory_id: rule.subcategory_id, source: "regra_aprendida", rule_id: rule.id, system_rule: null, suggestion: null };
   }
 
   // 4) Similaridade (somente sugestão): padrão aprendido contido na descrição ou vice-versa.
