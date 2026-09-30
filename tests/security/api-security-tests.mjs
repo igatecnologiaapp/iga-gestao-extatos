@@ -224,6 +224,7 @@ async function cleanup() {
     "card_invoices",
     "staged_transactions",
     "import_batches",
+    "classification_rules",
     "transaction_subcategories",
     "transaction_categories",
     "cards",
@@ -593,6 +594,44 @@ async function main() {
     const r = await anon.storage.from("financial-documents").download(`${ids.beta}/qa-${stamp}/extrato.csv`);
     return { data: r.data, error: r.error };
   });
+
+  // ============ CLS — memória de classificação ============
+  const ruleOf = (company, extra = {}) => ({
+    company_id: ids[company], pattern: `qa seguradora ${company}`, match_type: "exata",
+    category_id: company === "alfa" ? ids.catAlfa : ids.catBeta, origin: "aprendida", ...extra,
+  });
+  const { data: rB } = await admin.from("classification_rules").insert(ruleOf("beta")).select("id").single();
+  ids.ruleBeta = rB?.id;
+  await allow("CLS-01", "Financeiro classifica e cria regra da própria empresa", () =>
+    finAlfaC.from("classification_rules").insert(ruleOf("alfa")).select("id"));
+  const { data: rA } = await admin.from("classification_rules").select("id").eq("company_id", ids.alfa).limit(1).single();
+  ids.ruleAlfa = rA?.id;
+  await deny("CLS-02", "Empresa Alfa não lê regras da Beta", () =>
+    finAlfaC.from("classification_rules").select("id").eq("id", ids.ruleBeta));
+  await deny("CLS-03", "Empresa Alfa não altera regras da Beta", () =>
+    finAlfaC.from("classification_rules").update({ status: "inativo" }).eq("id", ids.ruleBeta).select());
+  await deny("CLS-04", "Empresa Alfa não cria regra na Beta", () =>
+    finAlfaC.from("classification_rules").insert(ruleOf("beta", { pattern: "qa invasao" })).select());
+  await deny("CLS-05", "Regra não aponta categoria de outra empresa", () =>
+    finAlfaC.from("classification_rules").insert(ruleOf("alfa", { pattern: "qa cruzada", category_id: ids.catBeta })).select());
+  await deny("CLS-06", "Auditor não gerencia regras", () =>
+    audAlfa.from("classification_rules").update({ status: "inativo" }).eq("id", ids.ruleAlfa).select());
+  await deny("CLS-07", "Auditor não cria regras", () =>
+    audAlfa.from("classification_rules").insert(ruleOf("alfa", { pattern: "qa auditor" })).select());
+  await deny("CLS-08", "Nenhum perfil exclui regras (apenas desativa)", () =>
+    finAlfaC.from("classification_rules").delete().eq("id", ids.ruleAlfa).select());
+  await allow("CLS-09", "Financeiro desativa regra da própria empresa", () =>
+    finAlfaC.from("classification_rules").update({ status: "inativo" }).eq("id", ids.ruleAlfa));
+  const { data: clsAudit } = await admin.from("audit_log").select("action").eq("entity", "classification_rules").eq("entity_id", ids.ruleAlfa);
+  const acts = (clsAudit ?? []).map((r) => r.action);
+  record("CLS-10", "Auditoria registra criação e desativação da regra", "create + status_change",
+    acts.includes("create") && acts.includes("status_change"), JSON.stringify(acts));
+  await deny("CLS-11", "Anônimo não lê regras", () => anon.from("classification_rules").select("id"));
+  await deny("CLS-12", "Lançamento não referencia regra/categoria de outra empresa (aplicação não contorna RLS)", () =>
+    finAlfaC.from("transactions").insert({
+      company_id: ids.alfa, source_type: "conta", posted_at: "2026-08-05", description: "qa cls", normalized_description: "qa cls",
+      amount: 1, direction: "saida", origin: "manual", category_id: ids.catBeta, classification_source: "regra_aprendida", classification_rule_id: ids.ruleBeta,
+    }).select());
 
   // ============ PRIV — funções de segurança fora da API ============
   for (const [id, fn, args] of [
