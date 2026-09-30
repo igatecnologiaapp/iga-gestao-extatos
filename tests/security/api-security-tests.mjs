@@ -562,8 +562,8 @@ async function main() {
     finAlfaC.from("import_batches").update({ integrity: { ...divergent, override: { by: users.finAlfa.id, reason: "ok" } } }).eq("id", ids.batchDiv).select());
   await deny("IMP-05", "Decisão em nome de outro usuário é recusada", () =>
     finAlfaC.from("import_batches").update({ integrity: { ...divergent, override: { by: users.adminAlfa.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
-  await deny("IMP-06", "Perfil Consulta não registra decisão de divergência", () =>
-    conAlfa.from("import_batches").update({ integrity: { ...divergent, override: { by: users.conAlfa.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
+  await deny("IMP-06", "Perfil Auditor não registra decisão de divergência", () =>
+    audAlfa.from("import_batches").update({ integrity: { ...divergent, override: { by: users.audAlfa.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
   await deny("IMP-07", "Empresa Beta não registra decisão em lote da Alfa", () =>
     adminBeta.from("import_batches").update({ integrity: { ...divergent, override: { by: users.adminBeta.id, reason: "Conferido manualmente com o banco" } } }).eq("id", ids.batchDiv).select());
   await allow("IMP-08", "Decisão justificada pelo próprio usuário é aceita", () =>
