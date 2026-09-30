@@ -1,0 +1,59 @@
+--- pagina 1
+Pan Mastercard Internacional
+Titular Ficticio | Cartão titular final 8012
+Fatura de setembro   Limite total   Vencimento
+R$ 249,95   R$ 310,00   02/09/2026
+Pagamento parcial: mínimo R$ 37,83
+Taxa de juros: 20,49% mês | 836,29% ano
+Via: 1
+Atenção: caso não faça o pagamento ou pague um valor menor que o mínimo, o valor não pago será cobrado na fatura do mês seguinte com juros de 20,49%, encargos e demais taxas. Seu
+cartão vai ser bloqueado e seu nome poderá ser incluso nos órgãos de proteção ao crédito. O valor máximo dos encargos em caso de pagamento mínimo até o vencimento é de R$ 43,46.
+Composição do pagamento mínimo: R$ 0,07 referente a um percentual sobre os valores não pagos da última fatura e seus respectivos encargos + R$ 0,00 referente aos valores de
+parcelamento de fatura e encargos em caso de atraso + R$ 37,76 referente a um percentual das novas transações nessa fatura.
+Pagamento parcelado:
+Taxa de juros: 4,99% mês | 77,50% ano > O pagamento parcelado tem taxas menores do que o pagamento parcial
+Escolha uma das   Digite o valor exato da parcela   As parcelas restantes
+1 opções abaixo (encontre   2 escolhida quando pagar o boleto.   3 vão vir em suas
+mais opções no app do Pan).   Essa será a entrada do parcelamento.   próximas faturas.
+6x de   8x de   10x de   12x de
+R$ 47,37   R$ 37,29   R$ 31,30   R$ 27,34
+IOF R$ 2,56 (1,01%do valorfinanciado)   IOFR$3,22(1,27%dovalorfinanciado)   IOFR$ 3,91 (1,54%do valor financiado)   IOF R$ 4,63 (1,81%do valorfinanciado)
+CET(5,430%mês/ 88,800%ano)   CET (5,410%mês /88,240% ano)   CET(5,400% mês /88,090%ano)   CET(5,390%mês/ 87,890%ano)
+Total: R$ 284,22   Total: R$ 298,32   Total: R$ 313,00   Total: R$ 328,08
+Validade das ofertas: 15 dias após o vencimento da fatura. Se você efetivar   Pagamento: caso o pagamento seja realizado antes do vencimento, o parcelamento será
+a simulação de parcelamento em qualquer outro canal, as ofertas de parcelamento   visualizado no app dois dias depois do vencimento. Se o pagamento for após o vencimento, a
+acima serão canceladas.   visualização no app será no dia seguinte. O limite é liberado conforme pagamento das parcelas
+Pague pelo app do Pan e libere o limite na hora!
+É só pagar com o saldo da sua conta.
+O pagamento com boleto pode demorar até 3 dias úteis para ser reconhecido.
+Boleto de pagamento
+Pagamentos por boleto demoram até 3 dias úteis para serem reconhecidos
+Digite o valor exato da opção de pagamento escolhida quando pagar o boleto
+e confira se o beneficiário é o Banco Pan S.A.
+Linha digitável do boleto de pagamento. Pagável em qualquer agência bancária e lotéricas
+00000.00000 BOLETO SANITIZADO
+Íâ/ãÑîÎ
+Caso o pagamento seja feito após às 20 horas, seu pagamento será efetivado no próximo dia útil.
+1/2
+--- pagina 2
+Limite para uso do cartão   Limite para saque
+Total   Utilizado   Disponível   Total   Sacado   Disponível
+R$ 310,00   R$ 300,92   R$ 9,08   R$ 93,00   R$ 0,00   R$ 93,00
+Resumo das faturas
+Valor da fatura   Valor pago na fatura   Lançamentos   Total da fatura
+anterior (agosto)   _   anterior (agosto)   +   do mês (setembro)   =   (setembro)
+R$ 25,16   R$ 25,16   R$ 249,95   R$ 249,95
+Próxima fatura | Outubro   Despesas futuras
+Fechamento: 24/09   Soma das parcelas e transações de suas
+Vencimento: 02/10   faturas nos próximos meses: R$ 50,97
+Parcelas e transações de outubro: R$ 16,99   (valor válido até o fechamento dessa fatura)
+Lançamentos do cartão   Titular Ficticio | Cartão final 8012
+> Compras e pagamentos feitos até o fechamento desta fatura (26/08/2026)   Total de compras e despesas nesse cartão: R$ 0,80
+05/08 Pagamento Efetuado   -R$ 25,16   26/08 Juros De Mora   R$ 0,01
+26/08 Iof   R$ 0,02   26/08 Multa De Atraso   R$ 0,38
+26/08 Juros De Atraso   R$ 0,39
+Lançamentos do cartão adicional   Adicional Ficticio | Cartão final 7181
+> Compras e pagamentos feitos até o fechamento desta fatura (26/08/2026)   Total de compras e despesas nesse cartão: R$ 249,15
+19/02 Pg *getninjas   Parcela 07/10   R$ 16,99   09/08 Pier Seguradora   R$ 104,13
+05/08 Dl *google Serasa Cons   R$ 23,90   21/08 Pier Seguradora   R$ 104,13
+Taxas e encargos
