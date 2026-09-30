@@ -12,10 +12,10 @@ import {
   ImportError,
   normalizeDescription,
   parseDocument,
-  resolveCategoryId,
   type ImportIntegrity,
   type ParseResult,
 } from "@/lib/importers";
+import { bumpRuleUsage, classifyWith, loadClassificationContext } from "@/lib/classification-service";
 
 export const STORAGE_BUCKET = "financial-documents";
 
@@ -214,8 +214,10 @@ async function buildStagedPayload(p: {
       for (const r of data ?? []) if (r.fingerprint) existingFingerprints.add(r.fingerprint);
     }
 
+    const ctx = await loadClassificationContext(companyId);
     const payload = rows.map(({ row, fingerprint, duplicateInFile }, index) => {
       const duplicateExisting = existingFingerprints.has(fingerprint);
+      const cls = classifyWith(ctx, row.description);
       return {
         company_id: companyId,
         import_id: batch.id,
@@ -225,7 +227,11 @@ async function buildStagedPayload(p: {
         amount: row.amount,
         direction: row.direction,
         currency: row.currency,
-        category_id: resolveCategoryId(row.description, input.categories),
+        category_id: cls.category_id,
+        subcategory_id: cls.subcategory_id,
+        classification_source: cls.source,
+        classification_rule_id: cls.rule_id,
+        classification_suggestion: (cls.suggestion ?? null) as never,
         status: "pendente" as const,
         duplicate_state: (duplicateExisting || duplicateInFile
           ? "possivel"
@@ -242,6 +248,7 @@ async function buildStagedPayload(p: {
       };
     });
 
+    await bumpRuleUsage(payload.map((r) => r.classification_rule_id));
     return payload;
 }
 
@@ -277,6 +284,12 @@ export async function confirmStaged(params: {
     currency: s.currency,
     category_id: s.category_id,
     subcategory_id: s.subcategory_id,
+    classification_source: s.classification_source,
+    classification_rule_id: s.classification_rule_id,
+    // Pagamento da fatura anterior: preservado como histórico, fora do total da fatura atual.
+    ...(params.batch.source_type === "cartao" && (s.raw as { nature?: string } | null)?.nature === "pagamento"
+      ? { charge_kind: "pagamento" as const, affects_invoice_total: false }
+      : {}),
     origin: "importado" as const,
     fingerprint: s.fingerprint,
     created_by: params.userId,
