@@ -664,3 +664,19 @@ AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOM
 - 81/81 unitários (11 novos: PAN sanitizado, texto linearizado do bug, PDFs sintéticos tabela simples / duas colunas + seções + negativos + titular/adicional + total declarado / divergência proposital, anomalias, agrupamento de linhas). CSV, OFX, XLS, XLSX e PDF anterior PASS.
 - 109/109 segurança. Typecheck e lint sem erros. E2E no preview: reprocessamento do PAN real = VALIDADA, 0 erros de console.
 - Não há OCR/IA. Migration `0005_import_integrity_control.sql`.
+
+---
+
+## 25. Fechamento da correção crítica de integridade (30/09/2026)
+
+### Classificação
+- Regra de sugestão (`classify.ts`) tornou-se conservadora: "Pagamento Efetuado/Recebido/de Fatura" (e PGTO/PAGTO) nunca recebem "Compra" → categoria "Pagamento" apenas se já existir no cadastro, senão **Não classificado**; estorno/crédito/devolução → Não classificado; removidos os padrões genéricos "pagamento", "cartão" e "débito automático" de Compra. Nenhuma categoria criada. Natureza continua definida pelo parser (independente da categoria).
+- PAN: "Pagamento Efetuado" — natureza Entrada, categoria Não classificado (item pendente do lote corrigido).
+- Testes: `tests/unit/classify.test.ts` (pagamento, compra, juros, multa, IOF, estorno/crédito, sem confiança).
+
+### Segurança — achado corrigido
+- **High (encontrado nesta revalidação):** um usuário com permissão de importação podia, pela API, alterar `import_batches.integrity` (trocar "divergente" por "validada", remover a integridade ou gravar decisão sem justificativa/de outro usuário) e contornar o bloqueio.
+- Correção (migrations 0006–0008): triggers `guard_import_integrity` e `guard_import_integrity_null` — decisão só como acréscimo, com justificativa ≥ 10 caracteres, `by = auth.uid()`, horário carimbado pelo servidor; divergência nunca é substituída por outro status; integridade não pode ser removida; lote com lançamentos confirmados tem integridade imutável; reprocessamento não pode trazer decisão pronta. Reprocessar lote divergente é bloqueado também na interface.
+- Limitação residual: a leitura do PDF ocorre no navegador; a proteção do servidor garante que uma divergência registrada não seja apagada, mas não recalcula o documento.
+- Testes novos IMP-01…IMP-19 (backend direto): bloqueio de divergência, decisão justificada/auditada, reprocessamento seguro, A×B, perfil sem permissão, anônimo (lotes, itens, arquivo original).
+- Scanner: 0 achados (Critical 0, High 0). Segurança: 128/128. Unitários: 86/86.
