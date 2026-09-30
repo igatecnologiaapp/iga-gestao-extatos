@@ -1,4 +1,4 @@
-import { IMPORT_ERRORS, type ImportFileFormat, type ParseResult } from "./types";
+import { IMPORT_ERRORS, type ImportFileFormat, type ParseContext, type ParseResult } from "./types";
 import { parseCsv, parseSheetRows, type SheetRow } from "./tabular";
 import { parseOfx } from "./ofx";
 import { parsePdfText, extractPdfText } from "./pdf";
@@ -8,7 +8,7 @@ export * from "./shared";
 export * from "./classify";
 export { parseCsv, parseSheetRows } from "./tabular";
 export { parseOfx } from "./ofx";
-export { parsePdfText, extractPdfText } from "./pdf";
+export { parsePdfText, extractPdfText, extractPdfTextWith, groupItemsIntoLines, detectDescriptionAnomalies } from "./pdf";
 
 export const ACCEPTED_EXTENSIONS = [".pdf", ".ofx", ".csv", ".xls", ".xlsx"];
 
@@ -56,6 +56,7 @@ export async function parseXlsxBuffer(buffer: ArrayBuffer): Promise<ParseResult>
 export async function parseDocument(
   format: ImportFileFormat,
   buffer: ArrayBuffer,
+  context: ParseContext = {},
 ): Promise<ParseResult> {
   if (buffer.byteLength === 0) throw IMPORT_ERRORS.emptyFile();
   switch (format) {
@@ -66,7 +67,7 @@ export async function parseDocument(
     case "xlsx":
       return parseXlsxBuffer(buffer);
     case "pdf":
-      return parsePdfText(await extractPdfText(buffer));
+      return parsePdfText(await extractPdfText(buffer), context);
     default:
       throw IMPORT_ERRORS.unsupported(String(format));
   }

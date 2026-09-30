@@ -321,7 +321,20 @@ export async function extractPdfText(data: ArrayBuffer): Promise<string> {
   const pdfjs = await import("pdfjs-dist");
   const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
   pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  return extractPdfTextWith(pdfjs as unknown as PdfJsLike, data);
+}
 
+type PdfJsLike = {
+  getDocument: (src: { data: Uint8Array }) => {
+    promise: Promise<{
+      numPages: number;
+      getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: unknown[] }> }>;
+    }>;
+  };
+};
+
+/** Núcleo da extração posicional, independente do ambiente (navegador/testes). */
+export async function extractPdfTextWith(pdfjs: PdfJsLike, data: ArrayBuffer): Promise<string> {
   const doc = await pdfjs.getDocument({ data: new Uint8Array(data) }).promise;
   const pages: string[] = [];
   for (let p = 1; p <= doc.numPages; p++) {
