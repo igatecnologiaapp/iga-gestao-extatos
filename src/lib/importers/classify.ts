@@ -64,6 +64,16 @@ export function suggestCategoryName(description: string): string | null {
   return null;
 }
 
+/**
+ * Regras semânticas obrigatórias (pagamento, estorno/crédito, juros, taxas):
+ * têm prioridade sobre qualquer memória de classificação. "Compra" é regra fraca.
+ */
+export function isSemanticallyLocked(description: string): boolean {
+  const text = normalizeDescription(description);
+  if (!text) return false;
+  return RULES.filter((r) => r.category !== "Compra").some((r) => r.patterns.some((p) => p.test(text)));
+}
+
 /** Resolve o id da categoria cadastrada correspondente à sugestão (case-insensitive). */
 export function resolveCategoryId(
   description: string,
