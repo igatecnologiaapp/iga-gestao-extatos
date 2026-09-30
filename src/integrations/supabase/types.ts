@@ -366,6 +366,7 @@ export type Database = {
           file_size: number
           id: string
           institution_id: string | null
+          integrity: Json | null
           parsed_count: number
           period_end: string | null
           period_start: string | null
@@ -390,6 +391,7 @@ export type Database = {
           file_size?: number
           id?: string
           institution_id?: string | null
+          integrity?: Json | null
           parsed_count?: number
           period_end?: string | null
           period_start?: string | null
@@ -414,6 +416,7 @@ export type Database = {
           file_size?: number
           id?: string
           institution_id?: string | null
+          integrity?: Json | null
           parsed_count?: number
           period_end?: string | null
           period_start?: string | null

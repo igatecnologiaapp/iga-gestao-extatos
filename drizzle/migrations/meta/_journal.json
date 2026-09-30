@@ -36,6 +36,13 @@
       "when": 1790583895334,
       "tag": "0004_phase3_revoke_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790768444400,
+      "tag": "0005_import_integrity_control",
+      "breakpoints": true
     }
   ]
 }
