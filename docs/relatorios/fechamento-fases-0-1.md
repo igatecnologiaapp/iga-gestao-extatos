@@ -723,3 +723,19 @@ AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOM
 **Observação (sem alteração nesta rodada):** no lote PAN em Revisão, 4 compras (Pier Seguradora ×2, Dl *google, Pg *getninjas) estão com categoria "Pagamento", atribuída antes desta correção (origem não determinável). A migração 0009 rotulou retroativamente itens em revisão já categorizados como "Regra do sistema", o que é impreciso para esses itens. Recomenda-se revisar essas categorias manualmente antes de confirmar o lote. Valores e total não são afetados.
 
 **CORREÇÃO SEMÂNTICA DE FATURA E MEMÓRIA DE CLASSIFICAÇÃO HOMOLOGADA NO AMBIENTE PUBLICADO. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA. DESENVOLVIMENTO PARADO.**
+
+## 28. Correção complementar — Classificação e proveniência (30/09/2026)
+
+**Causa (diagnóstico):** os 4 itens PAN (Pier Seguradora ×2, Dl *google Serasa Cons, Pg *getninjas) foram criados no reprocessamento de 11:42; o classificador vigente nessa versão não possuía regra capaz de gerar "Pagamento" para essas descrições, e o parser não atribui categorias. A categoria foi aplicada entre 11:42 e 12:28 por rotina não auditada (itens em revisão não possuíam trilha de alteração) → **Origem histórica indeterminada**. O selo "Regra do sistema" foi atribuído indevidamente pelo preenchimento retroativo da migração 0009, que rotulou qualquer item já categorizado como regra do sistema sem evidência.
+
+**Correção de proveniência (migrações 0012–0014):** novos campos de evidência (`classification_system_rule`, `classified_by`, `classified_at`) e trigger que impõe invariantes: regra aprendida exige regra referenciada; regra do sistema exige identificador da regra determinística (`categoria:padrão`); manual grava o usuário autenticado e data (não aceita usuário informado pelo cliente); não classificado sem categoria. Confirmação herda exatamente a evidência do item revisado. Interface exibe "Origem histórica indeterminada" quando não há evidência — nunca "Regra do sistema" como fallback.
+
+**PAN:** os 4 itens passaram a Não classificado (auditoria registra valor/origem anterior, novo valor e motivo "Correção de classificação/proveniência inconsistente"; processo `correcao-proveniencia`). Nenhuma regra criada. Valores, datas, natureza, cartão e integridade preservados: 9 lançamentos, titular R$ 0,80, adicional R$ 249,15, total R$ 249,95, diferença R$ 0,00, VALIDADA. Lote mantido em Revisão.
+
+**Verificação histórica (somente consulta, sem correção em massa):** Caso A 0; Caso B 0; Caso D 0; Caso C: 231 itens de revisão (7 pendentes, incl. 4 encargos do PAN) e 219 lançamentos confirmados rotulados "Regra do sistema" sem identificador (preenchimento retroativo). Exibidos agora como "Origem histórica indeterminada"; saneamento aguarda autorização.
+
+**Testes:** unitários 104/104; segurança 145/145 (novos PROV-01..04); scanner e linter sem achados.
+
+**Produção:** SHA `f1b2cc3fd96065fd0b3ba30895e85529749d4f1a`, deployment `psr2.09a31c0b-105f-46fe-8f3f-50a11d113988`, /health ok, console 0 erros. PAN público: 249,95 / 0,00 / VALIDADA; 4 compras Não classificado, sem selo. Memória em produção (dados sintéticos): manual com usuário registrado → segunda ocorrência "Regra aprendida" com referência à regra. Dados e 2 CSVs sintéticos removidos; auditoria preservada.
+
+**CORREÇÃO DE CLASSIFICAÇÃO E PROVENIÊNCIA VALIDADA E PUBLICADA. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA. DESENVOLVIMENTO PARADO.**
