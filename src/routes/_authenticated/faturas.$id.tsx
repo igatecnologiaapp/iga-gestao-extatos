@@ -162,6 +162,23 @@ function InvoiceDetail({ company, id }: { company: Company; id: string }) {
     }
   }
 
+  const [unlinkId, setUnlinkId] = useState<string | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
+  async function confirmUnlink() {
+    if (!unlinkId || unlinking) return;
+    setUnlinking(true);
+    try {
+      await unlinkTransaction(unlinkId, userId);
+      toast.success("Lançamento desvinculado com sucesso.");
+      setUnlinkId(null);
+      await refresh();
+    } catch (e) {
+      toast.error(friendlyInvoiceError(e));
+    } finally {
+      setUnlinking(false);
+    }
+  }
+
   async function setLifecycle(status: CardInvoice["status"], ok: string) {
     await run(async () => {
       const { error } = await supabase.from("card_invoices").update({ status }).eq("id", id);
@@ -364,7 +381,7 @@ function InvoiceDetail({ company, id }: { company: Company; id: string }) {
                       </TableCell>
                       {canLink && (
                         <TableCell>
-                          <Button variant="ghost" size="icon" aria-label="Desvincular" onClick={() => run(() => unlinkTransaction(t.id, userId), "Lançamento desvinculado da fatura.")}>
+                          <Button variant="ghost" size="icon" aria-label="Desvincular" onClick={() => setUnlinkId(t.id)}>
                             <Unlink className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -388,7 +405,7 @@ function InvoiceDetail({ company, id }: { company: Company; id: string }) {
                     {t.installment_number ? ` · Parcela ${installmentLabel(t.installment_number, t.installment_total)}` : ""} · {ORIGIN_LABELS[t.origin]}
                   </p>
                   {canLink && (
-                    <Button variant="ghost" size="sm" className="mt-1 h-8 px-2 text-xs" onClick={() => run(() => unlinkTransaction(t.id, userId), "Lançamento desvinculado da fatura.")}>
+                    <Button variant="ghost" size="sm" className="mt-1 h-8 px-2 text-xs" onClick={() => setUnlinkId(t.id)}>
                       <Unlink className="mr-1 h-3.5 w-3.5" />Desvincular
                     </Button>
                   )}
@@ -468,6 +485,23 @@ function InvoiceDetail({ company, id }: { company: Company; id: string }) {
           setConfirm(null);
         }}
       />
+      <Dialog open={!!unlinkId} onOpenChange={(v) => { if (!v && !unlinking) setUnlinkId(null); }}>
+        <DialogContent onInteractOutside={(e) => unlinking && e.preventDefault()} onEscapeKeyDown={(e) => unlinking && e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Confirmar desvinculação</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm font-medium">Deseja realmente desvincular este lançamento da fatura?</p>
+          <p className="text-sm text-muted-foreground">
+            O lançamento continuará registrado no sistema, porém deixará de estar vinculado a esta fatura.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" disabled={unlinking} onClick={() => setUnlinkId(null)}>Cancelar</Button>
+            <Button disabled={unlinking} onClick={confirmUnlink}>
+              {unlinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmar desvinculação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
