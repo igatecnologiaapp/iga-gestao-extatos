@@ -739,3 +739,15 @@ AJUSTE DE EDIÇÃO DE INSTITUIÇÃO CONCLUÍDO. FASES 0, 1, 2 E 3 PERMANECEM HOM
 **Produção:** SHA `f1b2cc3fd96065fd0b3ba30895e85529749d4f1a`, deployment `psr2.09a31c0b-105f-46fe-8f3f-50a11d113988`, /health ok, console 0 erros. PAN público: 249,95 / 0,00 / VALIDADA; 4 compras Não classificado, sem selo. Memória em produção (dados sintéticos): manual com usuário registrado → segunda ocorrência "Regra aprendida" com referência à regra. Dados e 2 CSVs sintéticos removidos; auditoria preservada.
 
 **CORREÇÃO DE CLASSIFICAÇÃO E PROVENIÊNCIA VALIDADA E PUBLICADA. FASES 0, 1, 2 E 3 PERMANECEM HOMOLOGADAS. FASE 4 PERMANECE BLOQUEADA. DESENVOLVIMENTO PARADO.**
+
+## 29. Saneamento histórico de proveniência (01/10/2026)
+
+Universo atual sem identificador de regra do sistema: 454 registros (231 itens de revisão: 223 confirmados, 5 descartados, 3 pendentes; 223 lançamentos: 217 ativos, 6 inativos). A contagem anterior (450/7/219) diferia porque os 4 itens PAN já corrigidos saíram do grupo pendente e lançamentos inativos não haviam sido somados.
+
+Evidências consultadas: auditoria (criação no momento da confirmação do lote, sem indicar quem classificou; atualização de 30/09 12:28 = preenchimento retroativo da migração 0009, sem usuário; 4 atualizações de 30/09 13:07 sem alteração de categoria), regras aprendidas (nenhuma referência), classified_by (vazio), identificador de regra (vazio). Itens de revisão não possuem trilha própria.
+
+Resultado: Manual comprovado 0; Regra aprendida comprovada 0; Regra do sistema comprovada 0; Origem histórica indeterminada 454. Nenhum registro alterado; 0 categorias, 0 subcategorias e 0 valores alterados; 0 regras criadas; memória alimentada só por classificação manual atual (learnClassification). PAN preservado.
+
+## 30. Confirmação de desvinculação (faturas)
+
+Botão Desvincular agora abre "Confirmar desvinculação"; Cancelar não altera nada; confirmação bloqueia novo clique durante o processamento e exibe "Lançamento desvinculado com sucesso."; em erro, o vínculo permanece. Arquivo: src/routes/_authenticated/faturas.$id.tsx.
