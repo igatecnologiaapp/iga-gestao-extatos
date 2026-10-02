@@ -751,3 +751,11 @@ Resultado: Manual comprovado 0; Regra aprendida comprovada 0; Regra do sistema c
 ## 30. Confirmação de desvinculação (faturas)
 
 Botão Desvincular agora abre "Confirmar desvinculação"; Cancelar não altera nada; confirmação bloqueia novo clique durante o processamento e exibe "Lançamento desvinculado com sucesso."; em erro, o vínculo permanece. Arquivo: src/routes/_authenticated/faturas.$id.tsx.
+
+## 31. Validação final — desvinculação e baseline de segurança (02/10/2026)
+
+Site público (SHA 2d713d24d70151f29dd3e75bc0082a52f1ea712c, deployment psr2.0eccccf3-0f1d-4362-a02f-38d2808499b0, /health ok, console 0 erros). Teste com dados sintéticos (cartão "QA DESVINCULO", fatura 12/2026, lançamentos QA A e B): janela exibida; vínculo presente antes da confirmação; botão desabilitado durante o processamento; segundo clique bloqueado; 1 única atualização registrada na auditoria (invoice_id → null, com usuário); lançamento A preservado (ativo), B intacto; mensagem "Lançamento desvinculado com sucesso."; a fatura deixou de listar A. Dados QA removidos; auditoria preservada. Na fatura PAN pública, apenas Cancelar (computador e celular): 8 lançamentos permanecem.
+Caminho de erro: não há teste automatizado que simule falha; não foi provocada falha em produção. Por código, em erro o vínculo não é alterado e a mensagem de erro é exibida.
+Segurança: 145/145, scanner sem achados (Critical 0 / High 0), 104/104 automáticos, tipos OK, build OK.
+Saneamento histórico ENCERRADO: 454 analisados, 0 comprovados, 454 indeterminados, 0 alterações financeiras, 0 regras criadas.
+AJUSTE DE CONFIRMAÇÃO DE DESVINCULAÇÃO VALIDADO E HOMOLOGADO. FASES 0–3 HOMOLOGADAS. FASE 4 BLOQUEADA.
