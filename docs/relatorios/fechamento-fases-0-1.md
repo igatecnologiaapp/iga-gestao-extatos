@@ -759,3 +759,11 @@ Caminho de erro: não há teste automatizado que simule falha; não foi provocad
 Segurança: 145/145, scanner sem achados (Critical 0 / High 0), 104/104 automáticos, tipos OK, build OK.
 Saneamento histórico ENCERRADO: 454 analisados, 0 comprovados, 454 indeterminados, 0 alterações financeiras, 0 regras criadas.
 AJUSTE DE CONFIRMAÇÃO DE DESVINCULAÇÃO VALIDADO E HOMOLOGADO. FASES 0–3 HOMOLOGADAS. FASE 4 BLOQUEADA.
+
+## 32. Registro formal (02/10/2026)
+
+AJUSTE DE CONFIRMAÇÃO DE DESVINCULAÇÃO — HOMOLOGADO.
+SANEAMENTO HISTÓRICO DE PROVENIÊNCIA — ENCERRADO.
+FASES 0, 1, 2 E 3 — HOMOLOGADAS.
+BASELINE PÚBLICA: 2d713d24d70151f29dd3e75bc0082a52f1ea712c.
+FASE 4 — BLOQUEADA ATÉ AUTORIZAÇÃO EXPRESSA.
